@@ -4,7 +4,7 @@ CONFIGURE=sh configure
 all: distclean configure build
 
 configure:
-	@$(CONFIGURE) --hdf5-dir=/home/boo/ipac/src/hdf-bin
+	sh configure --ccfits-dir=$(CM_TPS_DIR) --hdf5-dir=$(CM_TPS_DIR) --boost-dir=${CM_ENV_DIR}/misc
 
 build:
 	@$(WAF) build
@@ -22,6 +22,9 @@ docs:
 	@$(WAF) docs
 
 install:
+	@$(WAF) install
+
+installdocs:
 	@$(WAF) install
 
 uninstall:

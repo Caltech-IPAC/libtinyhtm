@@ -1,5 +1,5 @@
 
-//  $Id: geometry.h,v 20130510.99171235 2013/05/11 00:12:35 modell ipac $
+//  $Id: geometry.h,v 20130613.99132738 2013/06/13 20:27:38 modell ipac $
 
 /** \file
     \brief      Minimalistic functions and types for spherical geometry.
@@ -13,13 +13,13 @@
 
 #include "common.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifndef FALSE
 #define FALSE 0
 #define TRUE  1
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /* ================================================================ */
@@ -107,9 +107,9 @@ HTM_INLINE void htm_v3_add(struct htm_v3 *out,
 /** Stores the vector difference <tt>v1 - v2</tt> in \p out.
     Arguments must not be NULL pointers, but may alias.
   */
-HTM_INLINE void htm_v3_sub(struct htm_v3 *out,
-                           const struct htm_v3 *v1,
-                           const struct htm_v3 *v2)
+HTM_INLINE void htm_v3_sub(       struct htm_v3 *out,
+                            const struct htm_v3 *v1,
+                            const struct htm_v3 *v2   )
 {
     out->x = v1->x - v2->x;
     out->y = v1->y - v2->y;
@@ -259,13 +259,13 @@ enum htm_errcode htm_v3_ne(struct htm_v3 *north,
     \return
             - HTM_ENULLPTR  if \p angle, \p v1 or \p v2 is NULL.
             - HTM_EDEGEN    if \p v1 is too close to \p v2.
-            - HTM_EANG      if \p r is negative or too large.
+            - HTM_EANG      if \p r is zero or too large.
             - HTM_OK        on success.
   */
-enum htm_errcode htm_v3_tanrot(double *angle,
-                               const struct htm_v3 *v1,
-                               const struct htm_v3 *v2,
-                               double r);
+enum htm_errcode htm_v3_tanrot( double              *angle,
+                                const struct htm_v3 *v1,
+                                const struct htm_v3 *v2,
+                                double               r      );
 
 /** Rotates vector \p v around the axis \p k by
     the specified number of degrees.
@@ -565,6 +565,12 @@ int htm_s2cpoly_cv3( const struct htm_s2cpoly * p, const struct htm_v3 * v );
   */
 int htm_puffpoly_cv3( const struct htm_puff_poly * pp, const struct htm_v3 * v );
 
+/** Returns 1 if the spherical convex htm_poly polygon \p pp ,
+    plus a dot product add-on, contains vector \p v, and 0 otherwise.  
+    Arguments must not be NULL pointers.
+  */
+int htm_s2cpolyplus_cv3( const struct htm_s2cpoly * pa, const struct htm_v3 * v, double addon );
+
 
 /** Returns a new htm_puff_poly puffed-up polygon, given htm_s2cpoly \p pgon, 
     enum puff_type \p h2p (How2Puff), & factor \p by (puff-BY-how-much), which 
@@ -597,7 +603,7 @@ enum htm_errcode htm_s2cpoly_pad(struct htm_s2cpoly *poly, double r);
 
 /* ================================================================ */
 /** @}
-    \defgroup geom_convex Convex Hull
+    \defgroup geom_convex convex Hull
     @{
  */
 /* ================================================================ */

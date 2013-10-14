@@ -1,5 +1,5 @@
 
-//  $Id: geometry.c,v 20130510.99171147 2013/05/11 00:11:47 modell ipac $
+//  $Id: geometry.c,v 20130619.99112110 2013/06/19 18:21:10 modell ipac $
 
 /** \file
     \brief      Spherical geometry implementation
@@ -18,10 +18,14 @@
 #include "tinyhtm/select.h"
 #include "tinyhtm/geometry.h"
 
+#ifndef FALSE
+#define FALSE 0
+#define TRUE  (! FALSE)
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /* ---- Spherical coordinates and 3-vectors ---- */
 
@@ -55,33 +59,60 @@ enum htm_errcode htm_v3_ne(struct htm_v3 *north,
 static const double HTM_NAN = 0.0 / 0.0;
 static const double HTM_RMAX = 90.0 - 0.001/3600.0;
 
-enum htm_errcode htm_v3_tanrot(double *angle,
-                               const struct htm_v3 *v1,
-                               const struct htm_v3 *v2,
-                               double r)
-{
-    double a, s;
-    if (angle == NULL || v1 == NULL || v2 == NULL) {
-        return HTM_ENULLPTR;
-    }
-    if (r <= 0.0) {
-        return HTM_EANG;
-    }
-    a = htm_v3_angsep(v1, v2);
-    if (a == 0.0) {
-        return HTM_EDEGEN;
-    }
-    if (a + 2.0*r > 2.0*HTM_RMAX) {
-        return HTM_EANG;
-    }
-    r *= HTM_RAD_PER_DEG;
-    a *= HTM_RAD_PER_DEG;
-    s = 2.0 * sin(r) * sin(0.5*a) / sin(a);
-    if (s >= 1.0) {
-        *angle = 90.0;
-    } else {
-        *angle = asin(s) * HTM_DEG_PER_RAD;
-    }
+//  enum htm_errcode htm_v3_tanrot( double              *angle,
+//                                  const struct htm_v3 *v1,
+//                                  const struct htm_v3 *v2,
+//                                  double               r      )
+//      {
+//      double a, s;
+//      if (angle == NULL || v1 == NULL || v2 == NULL) {
+//          return HTM_ENULLPTR;
+//      }
+//      if (r <= 0.0) {
+//          return HTM_EANG;
+//      }
+//      a = htm_v3_angsep(v1, v2);
+//      if (a == 0.0) {
+//          return HTM_EDEGEN;
+//      }
+//      if (a + 2.0*r > 2.0*HTM_RMAX) {
+//          return HTM_EANG;
+//      }
+//      r *= HTM_RAD_PER_DEG;
+//      a *= HTM_RAD_PER_DEG;
+//      s = 2.0 * sin(r) * sin(0.5*a) / sin(a);
+//      if (s >= 1.0) {
+//          *angle = 90.0;
+//      } else {
+//          *angle = asin(s) * HTM_DEG_PER_RAD;
+//      }
+//      return HTM_OK;
+//  }
+
+enum htm_errcode htm_v3_tanrot( double              *angle,
+                                const struct htm_v3 *v1,
+                                const struct htm_v3 *v2,
+                                double               r      )
+    {
+    double a;
+    double s;
+	 
+    if ( NULL == angle )             return HTM_ENULLPTR;
+    if ( NULL == v1    )             return HTM_ENULLPTR;
+    if ( NULL == v2    )             return HTM_ENULLPTR;
+	 
+    if ( 0.0  == r     )             return HTM_EANG;
+	 
+    a       = htm_v3_angsep(v1, v2);
+	 
+    if ( 0.0          == a         ) return HTM_EDEGEN;
+    if ( 2.0*HTM_RMAX <  a + 2.0*r ) return HTM_EANG;
+	 
+    r      *= HTM_RAD_PER_DEG;
+    a      *= HTM_RAD_PER_DEG;
+    s       = 2.0 * sin(r) * sin(0.5*a) / sin(a);
+   *angle   = atan(s) * HTM_DEG_PER_RAD;
+	 
     return HTM_OK;
 }
 
@@ -570,9 +601,11 @@ struct htm_s2cpoly * htm_s2cpoly_line(const struct htm_v3 *v1,
         }
         return NULL;
     }
+
     /* compute rotation axes */
     htm_v3_sub(&axis1, v1, v2);
     htm_v3_rcross(&axis2, v1, v2);
+
     /* compute edge plane normals */
     htm_v3_rot(&edges[0], &axis2, &axis1, a);
     htm_v3_rcross(&edges[1], v1, &axis2);
@@ -580,6 +613,7 @@ struct htm_s2cpoly * htm_s2cpoly_line(const struct htm_v3 *v1,
     htm_v3_rot(&edges[2], &axis2, &axis1, -a);
     htm_v3_rcross(&edges[3], v2, &axis2);
     htm_v3_rot(&edges[3], &edges[3], &axis2, r);
+
     /* cross products of edge plane normals yields vertices */
     htm_v3_rcross(&verts[0], &edges[0], &edges[1]);
     htm_v3_normalize(&verts[0], &verts[0]);
@@ -589,23 +623,40 @@ struct htm_s2cpoly * htm_s2cpoly_line(const struct htm_v3 *v1,
     htm_v3_normalize(&verts[2], &verts[2]);
     htm_v3_rcross(&verts[3], &edges[0], &edges[3]);
     htm_v3_normalize(&verts[3], &verts[3]);
+
     /* ... and build polygon from vertices */
     return htm_s2cpoly_init(verts, 4, err);
 }
 
 
+//  is vector in polygon ?
 int htm_s2cpoly_cv3( const struct htm_s2cpoly * p, const struct htm_v3 * v ) {
     
-    size_t i;
+          size_t i;
     const size_t n = p->n;
     for (i = 0; i < n; ++i) {
         if (htm_v3_dot(v, &p->ve[n + i]) < 0.0) {
-            return 0;
+            return FALSE;
         }
     }
-    return 1;
+    return TRUE;
 }
 
+//  is vector in polygon + addon ?
+int htm_s2cpolyplus_cv3( const struct htm_s2cpoly * pa, const struct htm_v3 * v, double addon ) {
+    
+          size_t    i;
+    const size_t    n = pa->n;
+    
+    for (i = 0; i < n; ++i) {
+        if ( 0.0 > ( addon + htm_v3_dot( v, &pa->ve[n + i] )) ) {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+//  is vector in puffed polygon ?
 int htm_puffpoly_cv3( const struct htm_puff_poly * pp, const struct htm_v3 * v ) {
     
     const size_t    n     = pp->polygon.n;
@@ -623,7 +674,7 @@ int htm_puffpoly_cv3( const struct htm_puff_poly * pp, const struct htm_v3 * v )
             break;
         
         case ADD_RADIUS:
-            //  placeholder for now
+            //  placeholder for future added puffages
             addon = pp->puffage;
             break;
     }
@@ -636,6 +687,7 @@ int htm_puffpoly_cv3( const struct htm_puff_poly * pp, const struct htm_v3 * v )
     return TRUE;
 }
 
+//  polygon --> puffed polygon
 struct htm_puff_poly *   puff_polygon( const struct htm_s2cpoly pgon, const enum puff_type h2p, const double by ) {
     
     struct htm_puff_poly * ppgon = malloc( sizeof( struct htm_puff_poly ));
@@ -665,6 +717,7 @@ struct htm_puff_poly *   puff_polygon( const struct htm_s2cpoly pgon, const enum
     return ppgon;
 }
 
+//  puffed polygon --> polygon
 struct htm_s2cpoly * unpuff_polygon( struct htm_puff_poly * ppgon ) {
     
     struct htm_s2cpoly * pgon = malloc( sizeof( struct htm_s2cpoly ));
@@ -716,31 +769,34 @@ struct htm_s2cpoly * htm_s2cpoly_clone(const struct htm_s2cpoly *poly)
 }
 
 
-enum htm_errcode htm_s2cpoly_pad(struct htm_s2cpoly *poly, double r)
-{
+enum htm_errcode htm_s2cpoly_pad( struct htm_s2cpoly *poly, double r ) {
+
+    size_t i, n;
+    int    hemis;
     struct htm_v3 stackbuf[128];
     struct htm_v3 *vecs;
     struct htm_v3 tmp;
     double angle;
-    size_t i, n;
-    int hemis;
+
     enum htm_errcode err = HTM_OK;
 
     if (poly == NULL) {
         return HTM_ENULLPTR;
-    } else if (r < 0.0) {
-        return HTM_EANG;
-    } else if (r == 0.0) {
+    }
+    else if (r == 0.0) {
         return HTM_OK;
     }
+
     n = poly->n;
+
     if (n > sizeof(stackbuf) / (2*sizeof(struct htm_v3))) {
         /* allocate scratch space */
         vecs = (struct htm_v3 *) malloc(n * 2 * sizeof(struct htm_v3));
         if (vecs == NULL) {
             return HTM_ENOMEM;
         }
-    } else {
+    }
+    else {
         vecs = stackbuf;
     }
 
@@ -770,7 +826,8 @@ enum htm_errcode htm_s2cpoly_pad(struct htm_s2cpoly *poly, double r)
     hemis = htm_v3_hemispherical(vecs, 2*n, &err);
     if (err != HTM_OK) {
         goto cleanup;
-    } else if (!hemis) {
+    }
+    else if (!hemis) {
         err = HTM_EANG;
         goto cleanup;
     }
@@ -1478,24 +1535,29 @@ struct htm_s2cpoly * htm_s2cpoly_hull(const struct htm_v3 *points,
         }
         return NULL;
     }
+
     if (!_htm_nv_valid(n)) {
         if (err != NULL) {
             *err = HTM_ELEN;
         }
         return NULL;
     }
+
     if (htm_v3_hemispherical(points, n, &e) != 1) {
         if (err != NULL) {
             *err = (e == HTM_OK) ? HTM_EHEMIS : e;
         }
         return NULL;
     }
+
     /* allocate space for 2n _htm_av3 structs. We need n vertices, n
        scratch entries for merge sort, and space for n edge plane normals. */
     if (n <= sizeof(stackbuf)/(2 * sizeof(struct _htm_av3))) {
         av = stackbuf;
-    } else {
+    }
+    else {
         av = (struct _htm_av3 *) malloc(2 * sizeof(struct _htm_av3) * n);
+
         if (av == NULL) {
             if (err != NULL) {
                 *err = HTM_ENOMEM;
