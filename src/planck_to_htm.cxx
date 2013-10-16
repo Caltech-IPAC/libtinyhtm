@@ -160,7 +160,6 @@ int main(int argc, char *argv[])
                         throw std::runtime_error(ss.str());
                       }
                     entry.htmid=htm_v3_id(&v,htm_depth);
-
                     out.append(&entry);
                   }
               }
@@ -173,34 +172,32 @@ int main(int argc, char *argv[])
                 H5::DataSet dataset = file.openDataSet("tod");                
 
                 H5::DataSpace dataspace = dataset.getSpace();
-                int rank = dataspace.getSimpleExtentNdims();
- 
-                hsize_t dims_out[2];
-                int ndims = dataspace.getSimpleExtentDims( dims_out, NULL);
-                std::cout << "rank " << rank << ", dimensions "
-                          << ndims << " "
-                          << (unsigned long)(dims_out[0]) << std::endl;
-                
-
-                H5T_class_t type_class = dataset.getTypeClass();
-
-                hsize_t mem_size[]={10};
-                H5::DataSpace memspace(1,mem_size);
-
-                std::vector<planck_hdf5_entry> hdf_entries(dims_out[0]);
-                std::cout << hdf_entries.size() << std::endl;
+                hsize_t size;
+                dataspace.getSimpleExtentDims(&size, NULL);
+                npoints+=size;
+                std::vector<planck_hdf5_entry> hdf_entries(size);
                 
                 H5::CompType compound(sizeof(planck_hdf5_entry));
-                compound.insertMember("od",HOFFSET(planck_hdf5_entry,od),H5::PredType::NATIVE_INT64);
-                compound.insertMember("ring",HOFFSET(planck_hdf5_entry,ring),H5::PredType::NATIVE_INT64);
-                compound.insertMember("glon",HOFFSET(planck_hdf5_entry,glon),H5::PredType::NATIVE_DOUBLE);
-                compound.insertMember("glat",HOFFSET(planck_hdf5_entry,glat),H5::PredType::NATIVE_DOUBLE);
-                compound.insertMember("psi",HOFFSET(planck_hdf5_entry,psi),H5::PredType::NATIVE_DOUBLE);
-                compound.insertMember("healpix_2048",HOFFSET(planck_hdf5_entry,healpix_2048),
+                compound.insertMember("od",HOFFSET(planck_hdf5_entry,od),
                                       H5::PredType::NATIVE_INT64);
-                compound.insertMember("tsky",HOFFSET(planck_hdf5_entry,tsky),H5::PredType::NATIVE_DOUBLE);
-                compound.insertMember("dipole",HOFFSET(planck_hdf5_entry,dipole),H5::PredType::NATIVE_DOUBLE);
-                compound.insertMember("utc",HOFFSET(planck_hdf5_entry,utc),H5::PredType::NATIVE_INT64);
+                compound.insertMember("ring",HOFFSET(planck_hdf5_entry,ring),
+                                      H5::PredType::NATIVE_INT64);
+                compound.insertMember("glon",HOFFSET(planck_hdf5_entry,glon),
+                                      H5::PredType::NATIVE_DOUBLE);
+                compound.insertMember("glat",HOFFSET(planck_hdf5_entry,glat),
+                                      H5::PredType::NATIVE_DOUBLE);
+                compound.insertMember("psi",HOFFSET(planck_hdf5_entry,psi),
+                                      H5::PredType::NATIVE_DOUBLE);
+                compound.insertMember("healpix_2048",
+                                      HOFFSET(planck_hdf5_entry,healpix_2048),
+                                      H5::PredType::NATIVE_INT64);
+                compound.insertMember("tsky",HOFFSET(planck_hdf5_entry,tsky),
+                                      H5::PredType::NATIVE_DOUBLE);
+                compound.insertMember("dipole",
+                                      HOFFSET(planck_hdf5_entry,dipole),
+                                      H5::PredType::NATIVE_DOUBLE);
+                compound.insertMember("utc",HOFFSET(planck_hdf5_entry,utc),
+                                      H5::PredType::NATIVE_INT64);
 
                 dataset.read(hdf_entries.data(), compound);
 
@@ -233,7 +230,6 @@ int main(int argc, char *argv[])
                         throw std::runtime_error(ss.str());
                       }
                     entry.htmid=htm_v3_id(&v,htm_depth);
-
                     out.append(&entry);
                   }
               }
