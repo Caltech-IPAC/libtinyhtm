@@ -204,12 +204,13 @@ def build(ctx):
     )
     # planck fits to htm converter
     ctx.program(
-        source=['src/planck_to_htm.cxx'],
+        source=['src/planck_to_htm.cxx', 'src/lzf/lzf_filter.c',
+                'src/lzf/lzf/lzf_c.c', 'src/lzf/lzf/lzf_d.c'],
         includes='include include/tinyhtm',
         target='planck_to_htm',
         name='planck_to_htm',
         install_path=os.path.join(ctx.env.PREFIX, 'bin'),
-        use='M PTHREAD tinyhtm_st sort_and_index_st CCfits hdf5_cxx'
+        use='M PTHREAD tinyhtm_st sort_and_index_st CCfits hdf5_cxx boost'
     )
     # Convert old format to hdf5
     ctx.program(
