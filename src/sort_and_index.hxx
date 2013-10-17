@@ -21,6 +21,8 @@ void reverse_file(const std::string &infile,
                   const mem_params &mem,
                   const uint64_t filesz);
 
+void append_htm(const std::string &htm_file, const std::string &data_file);
+
 template<class T>
 void sort_and_index(const std::string &data_file,
                     const std::string &scratch_file,
@@ -33,7 +35,8 @@ void sort_and_index(const std::string &data_file,
   size_t nnodes;
   ext_sort<T>(data_file, scratch_file, mem, npoints);
 
-  if (npoints > minpoints)
+  bool create_index(npoints > minpoints);
+  if (create_index)
     {
       struct tree_root super;
       uint64_t filesz;
@@ -48,6 +51,9 @@ void sort_and_index(const std::string &data_file,
     }
   /* Phase 4: convert spherical coords to unit vectors */
   spherical_to_vec<T>(data_file, scratch_file, mem, npoints);
+
+  if(create_index)
+    append_htm(htm_file,data_file);
 }
 
 

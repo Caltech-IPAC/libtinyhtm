@@ -174,6 +174,7 @@ def build(ctx):
             'src/sort_and_index/tree_entry.cxx',
             'src/sort_and_index/reverse_file.cxx',
             'src/sort_and_index/now.cxx',
+            'src/sort_and_index/append_htm.cxx',
             'src/sort_and_index/blk_writer/blk_write.cxx',
             'src/sort_and_index/ext_sort/mrg_npasses.cxx',
             'src/sort_and_index/tree_gen/layout_node.cxx',
@@ -200,7 +201,7 @@ def build(ctx):
         target='htm_tree_gen',
         name='htm_tree_gen',
         install_path=os.path.join(ctx.env.PREFIX, 'bin'),
-        use='M PTHREAD tinyhtm_st sort_and_index_st hdf5_cxx'
+        use='M PTHREAD tinyhtm_st sort_and_index_st hdf5_cxx boost'
     )
     # planck fits to htm converter
     ctx.program(

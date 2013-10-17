@@ -51,7 +51,7 @@ void spherical_to_vec(const std::string &datafile,
         compound.insertMember(T::names[i], HOFFSET(htm_entry<T>, data) + 8*i,
                               T::types[i]);
 
-      H5::DataSet dataset(file.createDataSet("htm",compound,file_space));
+      H5::DataSet dataset(file.createDataSet("data",compound,file_space));
 
       std::vector<T> ra_dec(std::min(npoints,mem.memsz/sizeof(T)));
       std::vector<htm_entry<T> > htm_data(std::min(npoints,mem.memsz/sizeof(T)));

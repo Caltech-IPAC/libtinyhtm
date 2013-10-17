@@ -24,7 +24,7 @@ def configure(conf):
     if conf.options.boost_libs:
         boost_libs=conf.options.boost_libs.split()
     else:
-        boost_libs=['boost_system','boost_filesystem']
+        boost_libs=['boost_system','boost_filesystem','boost_iostreams']
 
     conf.check_cxx(msg="Checking for Boost",
                   header_name='boost/filesystem.hpp',
