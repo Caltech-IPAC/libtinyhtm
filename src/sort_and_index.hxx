@@ -21,19 +21,19 @@ void reverse_file(const std::string &infile,
                   const mem_params &mem,
                   const uint64_t filesz);
 
-void append_htm(const std::string &htm_file, const std::string &data_file);
+void append_htm(const std::string &htm_path, const std::string &data_path);
 
 template<class T>
-void sort_and_index(const std::string &data_file,
-                    const std::string &scratch_file,
-                    const std::string &htm_file,
+void sort_and_index(const std::string &data_path,
+                    const std::string &scratch_path,
+                    const std::string &htm_path,
                     const mem_params &mem,
                     const size_t npoints,
                     const size_t minpoints,
                     const uint64_t leafthresh)
 {
   size_t nnodes;
-  ext_sort<T>(data_file, scratch_file, mem, npoints);
+  ext_sort<T>(data_path, scratch_path, mem, npoints);
 
   bool create_index(npoints > minpoints);
   if (create_index)
@@ -41,19 +41,19 @@ void sort_and_index(const std::string &data_file,
       struct tree_root super;
       uint64_t filesz;
       /* Phase 2: produce sorted tree nodes from data file */
-      nnodes = tree_gen<T>(data_file, htm_file, mem, super,
+      nnodes = tree_gen<T>(data_path, htm_path, mem, super,
                            leafthresh, npoints);
-      ext_sort<disk_node>(htm_file, scratch_file, mem, nnodes);
+      ext_sort<disk_node>(htm_path, scratch_path, mem, nnodes);
       /* Phase 3: compress tree file */
-      filesz = tree_compress(htm_file, scratch_file, mem, super,
+      filesz = tree_compress(htm_path, scratch_path, mem, super,
                              nnodes, leafthresh);
-      reverse_file(scratch_file, htm_file, mem, filesz);
+      reverse_file(scratch_path, htm_path, mem, filesz);
     }
   /* Phase 4: convert spherical coords to unit vectors */
-  spherical_to_vec<T>(data_file, scratch_file, mem, npoints);
+  spherical_to_vec<T>(data_path, scratch_path, mem, npoints);
 
   if(create_index)
-    append_htm(htm_file,data_file);
+    append_htm(htm_path,data_path);
 }
 
 
