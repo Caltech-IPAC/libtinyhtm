@@ -4,8 +4,8 @@
 
 namespace tinyhtm
 {
-  Query::Query(const std::string &tree_file, const std::string &data_file,
-               char *args[], const int &n): tree(tree_file,data_file),
+  Query::Query(const std::string &data_file,
+               char *args[], const int &n): tree(data_file),
                                             poly(nullptr)
   {
     if(args[0]==std::string("circle"))

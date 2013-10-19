@@ -38,7 +38,6 @@ struct htm_tree {
     size_t indexsz;         /**< Size of tree file memory-map (bytes). */
     off_t offset;          /**< Size of tree file memory-map (bytes). */
     hsize_t datasz;         /**< Size of data file memory-map (bytes). */
-    int indexfd;            /**< File descriptor for tree file. */
     int datafd;           /**< File descriptor for data file. */
 } HTM_ALIGNED(16);
 
@@ -47,7 +46,6 @@ struct htm_tree {
     in which case queries result in scans of the points in \p datafile.
   */
 enum htm_errcode htm_tree_init(struct htm_tree *tree,
-                               const char * const treefile,
                                const char * const datafile);
 
 /** Releases the resources for the given HTM tree.
@@ -81,7 +79,8 @@ enum htm_errcode htm_tree_lock(struct htm_tree *tree, size_t datathresh);
 int64_t htm_tree_s2circle_scan(const struct htm_tree *tree,
                                const struct htm_v3 *center,
                                double radius,
-                               enum htm_errcode *err);
+                               enum htm_errcode *err,
+                               int (*callback)(void*, int, hid_t*, char **));
 
 /** Returns the number of points in \p tree that are inside
     the given spherical ellipse.
@@ -96,7 +95,8 @@ int64_t htm_tree_s2circle_scan(const struct htm_tree *tree,
   */
 int64_t htm_tree_s2ellipse_scan(const struct htm_tree *tree,
                                 const struct htm_s2ellipse *ellipse,
-                                enum htm_errcode *err);
+                                enum htm_errcode *err,
+                                int (*callback)(void*, int, hid_t*, char **));
 
 /** Returns the number of points in \p tree that are inside
     the given spherical convex polygon.
@@ -111,7 +111,8 @@ int64_t htm_tree_s2ellipse_scan(const struct htm_tree *tree,
   */
 int64_t htm_tree_s2cpoly_scan(const struct htm_tree *tree,
                               const struct htm_s2cpoly *poly,
-                              enum htm_errcode *err);
+                              enum htm_errcode *err,
+                              int (*callback)(void*, int, hid_t*, char **));
 
 /** Returns the number of points in \p tree that are inside the
     spherical circle with the given center and radius.
@@ -127,11 +128,11 @@ int64_t htm_tree_s2circle_count(const struct htm_tree *tree,
 /** Invokes a callback for every point inside a given circle
   */
 
-int64_t htm_tree_s2circle_callback(const struct htm_tree *tree,
-                                   const struct htm_v3 *center,
-                                   double radius,
-                                   enum htm_errcode *err,
-                                   int (*callback)(void*, int, hid_t*, char **));
+int64_t htm_tree_s2circle(const struct htm_tree *tree,
+                          const struct htm_v3 *center,
+                          double radius,
+                          enum htm_errcode *err,
+                          int (*callback)(void*, int, hid_t*, char **));
 
 
 /** Returns the number of points in \p tree that are inside
@@ -147,10 +148,10 @@ int64_t htm_tree_s2ellipse_count(const struct htm_tree *tree,
 /** Invokes a callback for every point inside a given ellipse
   */
 
-int64_t htm_tree_s2ellipse_callback(const struct htm_tree *tree,
-                                    const struct htm_s2ellipse *ellipse,
-                                    enum htm_errcode *err,
-                                    int (*callback)(void*, int, hid_t*, char **));
+int64_t htm_tree_s2ellipse(const struct htm_tree *tree,
+                           const struct htm_s2ellipse *ellipse,
+                           enum htm_errcode *err,
+                           int (*callback)(void*, int, hid_t*, char **));
 
 /** Returns the number of points in \p tree that are inside
     the given spherical convex polygon.
@@ -165,10 +166,10 @@ int64_t htm_tree_s2cpoly_count(const struct htm_tree *tree,
 /** Invokes a callback for every point inside a given polygon
   */
 
-int64_t htm_tree_s2cpoly_callback(const struct htm_tree *tree,
-                                  const struct htm_s2cpoly *poly,
-                                  enum htm_errcode *err,
-                                  int (*callback)(void*, int, hid_t*, char **));
+int64_t htm_tree_s2cpoly(const struct htm_tree *tree,
+                         const struct htm_s2cpoly *poly,
+                         enum htm_errcode *err,
+                         int (*callback)(void*, int, hid_t*, char **));
 
 /** Returns a lower and upper bound on the number of points in \p tree
     that are inside the spherical circle with the given center and radius.

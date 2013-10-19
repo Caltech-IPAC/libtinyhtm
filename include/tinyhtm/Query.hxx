@@ -23,7 +23,7 @@ namespace tinyhtm
     std::vector<htm_v3> verts;
     struct htm_s2cpoly *poly;
     
-    Query(const std::string &Tree_file, const std::string &Data_file,
+    Query(const std::string &Data_file,
           char *args[], const int &n);
 
     int64_t count() const;

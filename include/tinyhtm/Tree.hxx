@@ -7,13 +7,12 @@ namespace tinyhtm
   {
   public:
     struct htm_tree tree;
-    Tree(const std::string &tree_file, const std::string &data_file)
+    Tree(const std::string &data_file)
     {
-      enum htm_errcode ec = htm_tree_init(&tree, tree_file.c_str(),
-                                          data_file.c_str());
+      enum htm_errcode ec = htm_tree_init(&tree, data_file.c_str());
       if(ec!=HTM_OK)
         throw Exception("Failed to init tree file or data file: "
-                        + tree_file + " " + data_file);
+                        + data_file);
     }
   };
 }

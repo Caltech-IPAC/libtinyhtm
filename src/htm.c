@@ -22,6 +22,8 @@
 #include "tinyhtm/tree.h"
 #include "tinyhtm/varint.h"
 
+#include <sys/mman.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1821,22 +1823,10 @@ char * bin_txt( ULL rx ) {
 //  static char * str128( U128_TYPE u128 ) 
 //  static char * str128( U64_TYPE u128 ) {
 char * str128( U64_TYPE u128 ) {
-    int     rc;
     char *  rtn = (char *)malloc( 1024 );    //  consumer should free() when done
-//      char *  itn;
     if ( 0 == rtn) return( "insufficient memory" );
-//      if ( (U64_TYPE)UINT64_MAX_VAL < (U64_TYPE)u128 ) {
-//          printf( "\n *WIDE str129() *\n" );
-//          U128_TYPE leading  = u128 / P10_UINT64;
-//          U64_TYPE  trailing = u128 % P10_UINT64;
-//          itn = str128( leading );
-//          rc += sprintf( rtn, "%s%." TO_STRING(E10_UINT64) PRIu64, itn, trailing );
-//          free( itn );
-//      }
-//      else {
-        U64_TYPE u64 = u128;
-        rc = sprintf( rtn, "%" PRIu64, u64 );
-//      }
+    U64_TYPE u64 = u128;
+    sprintf( rtn, "%" PRIu64, u64 );
     fflush( stdout );
     return( rtn );
 }
@@ -1868,11 +1858,11 @@ int n_dec_digs( int64_t num ) {
 
 
 
-int64_t htm_tree_s2circle_callback(const struct htm_tree *tree,
-                                   const struct htm_v3 *center,
-                                   double radius,
-                                   enum htm_errcode *err,
-                                   int (*callback)(void*, int, hid_t*, char **))
+int64_t htm_tree_s2circle(const struct htm_tree *tree,
+                          const struct htm_v3 *center,
+                          double radius,
+                          enum htm_errcode *err,
+                          int (*callback)(void*, int, hid_t*, char **))
 {
     struct _htm_path path;
     enum htm_root root;
@@ -1885,377 +1875,12 @@ int64_t htm_tree_s2circle_callback(const struct htm_tree *tree,
         }
         return -1;
     }
-    if (tree->indexfd == -1) {
-        return htm_tree_s2circle_scan(tree, center, radius, err);
+    if (tree->index == MAP_FAILED) {
+        return htm_tree_s2circle_scan(tree, center, radius, err, callback);
     } else if (radius < 0.0) {
         /* circle is empty */
         return 0;
-    }
-
-    count = 0;
-    /* compute square of secant distance corresponding to radius */
-    d2 = sin(radius * 0.5 * HTM_RAD_PER_DEG);
-    d2 = 4.0 * d2 * d2;
-
-    for (root = HTM_S0; root <= HTM_N3; ++root) {
-        struct _htm_node *curnode = path.node;
-        const unsigned char *s = tree->root[root];
-        uint64_t index = 0;
-        int level = 0;
-
-        if (s == NULL) {
-            /* root contains no points */
-            continue;
-        }
-        _htm_path_root(&path, root);
-
-        while (1) {
-            uint64_t curcount = htm_varint_decode(s);
-            s += 1 + htm_varint_nfollow(*s);
-            index += htm_varint_decode(s);
-            s += 1 + htm_varint_nfollow(*s);
-            curnode->index = index;
-
-            switch (_htm_s2circle_htmcov(curnode, center, d2)) {
-                case HTM_CONTAINS:
-                    if (level == 0) {
-                        /* no need to consider other roots */
-                        root = HTM_N3;
-                    } else {
-                        /* no need to consider other children of parent */
-                        curnode[-1].child = 4;
-                    }
-                    /* fall-through */
-                case HTM_INTERSECT:
-                    if (level < 20 && curcount >= tree->leafthresh) {
-                        s = _htm_subdivide(curnode, s);
-                        if (s == NULL) {
-                            /* tree is invalid */
-                            if (err != NULL) {
-                                *err = HTM_EINV;
-                            }
-                            return -1;
-                        }
-                        ++level;
-                        ++curnode;
-                        continue;
-                    }
-                    /* fall-through */
-                case HTM_INSIDE:
-                    /* fully covered HTM triangle */
-                    /* scan points in leaf */
-                    {
-                      uint64_t i;
-                      for (i = index; i < index + curcount; ++i) {
-                        /* This conditional is unnecessary if HTM_INSIDE */
-                        if (htm_v3_dist2(center,(struct htm_v3*)
-                                         (tree->entries+i*tree->entry_size))
-                            <= d2)
-                          {
-                            if(callback(tree->entries+i*tree->entry_size, tree->num_elements_per_entry,
-                                        tree->element_types, tree->element_names))
-                              ++count;
-                          }
-                      }
-                    }
-                    break;
-                default:
-                    /* HTM triangle does not intersect circle */
-                    break;
-            }
-            /* ascend towards the root */
-ascend:
-            --level;
-            --curnode;
-            while (level >= 0 && curnode->child == 4) {
-                --curnode;
-                --level;
-            }
-            if (level < 0) {
-                /* finished with this root */
-                break;
-            }
-            index = curnode->index;
-            s = _htm_subdivide(curnode, curnode->s);
-            if (s == NULL) {
-                /* no non-empty children remain */
-                goto ascend;
-            }
-            ++level;
-            ++curnode;
-        }
-    }
-    if (err != NULL) {
-        *err = HTM_OK;
-    }
-    return count;
-}
-
-int64_t htm_tree_s2ellipse_callback(const struct htm_tree *tree,
-                                    const struct htm_s2ellipse *ellipse,
-                                    enum htm_errcode *err,
-                                    int (*callback)(void*, int, hid_t*, char **))
-{
-    struct _htm_path path;
-    enum htm_root root;
-    int64_t count;
-
-    if (tree == NULL || ellipse == NULL) {
-        if (err != NULL) {
-            *err = HTM_ENULLPTR;
-        }
-        return -1;
-    }
-    if (tree->indexfd == -1) {
-        return htm_tree_s2ellipse_scan(tree, ellipse, err);
-    }
-
-    count = 0;
-
-    for (root = HTM_S0; root <= HTM_N3; ++root) {
-        struct _htm_node *curnode = path.node;
-        const unsigned char *s = tree->root[root];
-        uint64_t index = 0;
-        int level = 0;
-
-        if (s == NULL) {
-            /* root contains no points */
-            continue;
-        }
-        _htm_path_root(&path, root);
-
-        while (1) {
-            uint64_t curcount = htm_varint_decode(s);
-            s += 1 + htm_varint_nfollow(*s);
-            index += htm_varint_decode(s);
-            s += 1 + htm_varint_nfollow(*s);
-            curnode->index = index;
-
-            switch (_htm_s2ellipse_htmcov(curnode, ellipse)) {
-                case HTM_CONTAINS:
-                    if (level == 0) {
-                        /* no need to consider other roots */
-                        root = HTM_N3;
-                    } else {
-                        /* no need to consider other children of parent */
-                        curnode[-1].child = 4;
-                    }
-                    /* fall-through */
-                case HTM_INTERSECT:
-                    if (level < 20 && curcount >= tree->leafthresh) {
-                        s = _htm_subdivide(curnode, s);
-                        if (s == NULL) {
-                            /* tree is invalid */
-                            if (err != NULL) {
-                                *err = HTM_EINV;
-                            }
-                            return -1;
-                        }
-                        ++level;
-                        ++curnode;
-                        continue;
-                    }
-                    /* scan points in leaf */
-                    /* fall-through */
-                case HTM_INSIDE:
-                    /* fully covered HTM triangle */
-                    {
-                        uint64_t i;
-                        for (i = index; i < index + curcount; ++i) {
-                          if (htm_s2ellipse_cv3(ellipse, (struct htm_v3*)(tree->entries+i*tree->entry_size))) {
-                            if(callback(tree->entries+i*tree->entry_size, tree->num_elements_per_entry,
-                                        tree->element_types, tree->element_names))
-                              ++count;
-                          }
-                        }
-                    }
-                    break;
-                default:
-                    /* HTM triangle does not intersect circle */
-                    break;
-            }
-            /* ascend towards the root */
-ascend:
-            --level;
-            --curnode;
-            while (level >= 0 && curnode->child == 4) {
-                --curnode;
-                --level;
-            }
-            if (level < 0) {
-                /* finished with this root */
-                break;
-            }
-            index = curnode->index;
-            s = _htm_subdivide(curnode, curnode->s);
-            if (s == NULL) {
-                /* no non-empty children remain */
-                goto ascend;
-            }
-            ++level;
-            ++curnode;
-        }
-    }
-    if (err != NULL) {
-        *err = HTM_OK;
-    }
-    return count;
-}
-
-
-int64_t htm_tree_s2cpoly_callback(const struct htm_tree *tree,
-                                  const struct htm_s2cpoly *poly,
-                                  enum htm_errcode *err,
-                                  int (*callback)(void*, int, hid_t*, char **))
-{
-    double stackab[2*256 + 4];
-    struct _htm_path path;
-    enum htm_root root;
-    double *ab;
-    size_t nb;
-    int64_t count;
-
-    if (tree == NULL || poly == NULL) {
-        if (err != NULL) {
-            *err = HTM_ENULLPTR;
-        }
-        return -1;
-    }
-    if (tree->indexfd == -1) {
-        return htm_tree_s2cpoly_scan(tree, poly, err);
-    }
-    nb = (2 * poly->n + 4) * sizeof(double);
-    if (nb > sizeof(stackab)) {
-        ab = (double *) malloc(nb);
-        if (ab == NULL) {
-            if (err != NULL) {
-                *err = HTM_ENOMEM;
-            }
-            return -1;
-        }
-    } else {
-        ab = stackab;
-    }
-    count = 0;
-
-    for (root = HTM_S0; root <= HTM_N3; ++root) {
-        struct _htm_node *curnode = path.node;
-        const unsigned char *s = tree->root[root];
-        uint64_t index = 0;
-        int level = 0;
-
-        if (s == NULL) {
-            /* root contains no points */
-            continue;
-        }
-        _htm_path_root(&path, root);
-
-        while (1) {
-            uint64_t curcount = htm_varint_decode(s);
-            s += 1 + htm_varint_nfollow(*s);
-            index += htm_varint_decode(s);
-            s += 1 + htm_varint_nfollow(*s);
-            curnode->index = index;
-
-            switch (_htm_s2cpoly_htmcov(curnode, poly, ab)) {
-                case HTM_CONTAINS:
-                    if (level == 0) {
-                        /* no need to consider other roots */
-                        root = HTM_N3;
-                    } else {
-                        /* no need to consider other children of parent */
-                        curnode[-1].child = 4;
-                    }
-                    /* fall-through */
-                case HTM_INTERSECT:
-                    if (level < 20 && curcount >= tree->leafthresh) {
-                        s = _htm_subdivide(curnode, s);
-                        if (s == NULL) {
-                            /* tree is invalid */
-                            if (ab != stackab) {
-                                free(ab);
-                            }
-                            if (err != NULL) {
-                                *err = HTM_EINV;
-                            }
-                            return -1;
-                        }
-                        ++level;
-                        ++curnode;
-                        continue;
-                    }
-                    /* scan points in leaf */
-                    /* fall through */
-                case HTM_INSIDE:
-                    /* fully covered HTM triangle */
-                    {
-                        uint64_t i;
-                        for (i = index; i < index + curcount; ++i) {
-                          if (htm_s2cpoly_cv3(poly, (struct htm_v3*)(tree->entries+i*tree->entry_size))) {
-                            if(callback(tree->entries+i*tree->entry_size, tree->num_elements_per_entry,
-                                        tree->element_types, tree->element_names))
-                              ++count;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    /* HTM triangle does not intersect circle */
-                    break;
-            }
-            /* ascend towards the root */
-ascend:
-            --level;
-            --curnode;
-            while (level >= 0 && curnode->child == 4) {
-                --curnode;
-                --level;
-            }
-            if (level < 0) {
-                /* finished with this root */
-                break;
-            }
-            index = curnode->index;
-            s = _htm_subdivide(curnode, curnode->s);
-            if (s == NULL) {
-                /* no non-empty children remain */
-                goto ascend;
-            }
-            ++level;
-            ++curnode;
-        }
-    }
-    if (ab != stackab) {
-        free(ab);
-    }
-    if (err != NULL) {
-        *err = HTM_OK;
-    }
-    return count;
-}
-
-int64_t htm_tree_s2circle_count(const struct htm_tree *tree,
-                                const struct htm_v3 *center,
-                                double radius,
-                                enum htm_errcode *err)
-{
-    struct _htm_path path;
-    enum htm_root root;
-    double d2;
-    int64_t count;
-
-    if (tree == NULL || center == NULL) {
-        if (err != NULL) {
-            *err = HTM_ENULLPTR;
-        }
-        return -1;
-    }
-    if (tree->indexfd == -1) {
-        return htm_tree_s2circle_scan(tree, center, radius, err);
-    } else if (radius < 0.0) {
-        /* circle is empty */
-        return 0;
-    } else if (radius >= 180.0) {
+    } else if (callback==NULL && radius >= 180.0) {
         /* entire sky */
         return (int64_t) tree->count;
     }
@@ -2284,48 +1909,59 @@ int64_t htm_tree_s2circle_count(const struct htm_tree *tree,
             s += 1 + htm_varint_nfollow(*s);
             curnode->index = index;
 
-            switch (_htm_s2circle_htmcov(curnode, center, d2)) {
-                case HTM_CONTAINS:
-                    if (level == 0) {
-                        /* no need to consider other roots */
-                        root = HTM_N3;
-                    } else {
-                        /* no need to consider other children of parent */
-                        curnode[-1].child = 4;
+            enum _htm_cov coverage=_htm_s2circle_htmcov(curnode, center, d2);
+            if(coverage==HTM_CONTAINS)
+              {
+                if (level == 0) {
+                  /* no need to consider other roots */
+                  root = HTM_N3;
+                } else {
+                  /* no need to consider other children of parent */
+                  curnode[-1].child = 4;
+                }
+              }
+            if(coverage==HTM_CONTAINS || coverage==HTM_INTERSECT)
+              {
+                if (level < 20 && curcount >= tree->leafthresh) {
+                  s = _htm_subdivide(curnode, s);
+                  if (s == NULL) {
+                    /* tree is invalid */
+                    if (err != NULL) {
+                      *err = HTM_EINV;
                     }
-                    /* fall-through */
-                case HTM_INTERSECT:
-                    if (level < 20 && curcount >= tree->leafthresh) {
-                        s = _htm_subdivide(curnode, s);
-                        if (s == NULL) {
-                            /* tree is invalid */
-                            if (err != NULL) {
-                                *err = HTM_EINV;
-                            }
-                            return -1;
-                        }
-                        ++level;
-                        ++curnode;
-                        continue;
-                    }
-                    /* scan points in leaf */
+                    return -1;
+                  }
+                  ++level;
+                  ++curnode;
+                  continue;
+                }
+              }
+
+            /* fully covered HTM triangle */
+            if(callback==NULL && coverage==HTM_INSIDE)
+              {
+                count += (int64_t) curcount;
+              }
+            /* scan points in leaf */
+            else if(coverage==HTM_CONTAINS || coverage==HTM_INTERSECT
+                    || coverage==HTM_INSIDE)
+              {
+                uint64_t i;
+                for (i = index; i < index + curcount; ++i) {
+                  if (coverage==HTM_INSIDE
+                      || htm_v3_dist2(center,(struct htm_v3*)
+                                      (tree->entries+i*tree->entry_size)) <= d2)
                     {
-                        uint64_t i;
-                        for (i = index; i < index + curcount; ++i) {
-                          if (htm_v3_dist2(center, (struct htm_v3*)(tree->entries+i*tree->entry_size)) <= d2) {
-                                ++count;
-                            }
-                        }
+                      if(callback==NULL
+                         || callback(tree->entries+i*tree->entry_size,
+                                     tree->num_elements_per_entry,
+                                     tree->element_types,
+                                     tree->element_names))
+                        ++count;
                     }
-                    break;
-                case HTM_INSIDE:
-                    /* fully covered HTM triangle */
-                    count += (int64_t) curcount;
-                    break;
-                default:
-                    /* HTM triangle does not intersect circle */
-                    break;
-            }
+                }
+              }
+
             /* ascend towards the root */
 ascend:
             --level;
@@ -2354,10 +1990,10 @@ ascend:
     return count;
 }
 
-
-int64_t htm_tree_s2ellipse_count(const struct htm_tree *tree,
-                                 const struct htm_s2ellipse *ellipse,
-                                 enum htm_errcode *err)
+int64_t htm_tree_s2ellipse(const struct htm_tree *tree,
+                           const struct htm_s2ellipse *ellipse,
+                           enum htm_errcode *err,
+                           int (*callback)(void*, int, hid_t*, char **))
 {
     struct _htm_path path;
     enum htm_root root;
@@ -2369,8 +2005,8 @@ int64_t htm_tree_s2ellipse_count(const struct htm_tree *tree,
         }
         return -1;
     }
-    if (tree->indexfd == -1) {
-        return htm_tree_s2ellipse_scan(tree, ellipse, err);
+    if (tree->index == MAP_FAILED) {
+      return htm_tree_s2ellipse_scan(tree, ellipse, err, callback);
     }
 
     count = 0;
@@ -2394,48 +2030,56 @@ int64_t htm_tree_s2ellipse_count(const struct htm_tree *tree,
             s += 1 + htm_varint_nfollow(*s);
             curnode->index = index;
 
-            switch (_htm_s2ellipse_htmcov(curnode, ellipse)) {
-                case HTM_CONTAINS:
-                    if (level == 0) {
-                        /* no need to consider other roots */
-                        root = HTM_N3;
-                    } else {
-                        /* no need to consider other children of parent */
-                        curnode[-1].child = 4;
+            enum _htm_cov coverage=_htm_s2ellipse_htmcov(curnode, ellipse);
+            if(coverage==HTM_CONTAINS)
+              {
+                if (level == 0) {
+                  /* no need to consider other roots */
+                  root = HTM_N3;
+                } else {
+                  /* no need to consider other children of parent */
+                  curnode[-1].child = 4;
+                }
+              }
+            if(coverage==HTM_CONTAINS || coverage==HTM_INTERSECT)
+              {
+                if (level < 20 && curcount >= tree->leafthresh) {
+                  s = _htm_subdivide(curnode, s);
+                  if (s == NULL) {
+                    /* tree is invalid */
+                    if (err != NULL) {
+                      *err = HTM_EINV;
                     }
-                    /* fall-through */
-                case HTM_INTERSECT:
-                    if (level < 20 && curcount >= tree->leafthresh) {
-                        s = _htm_subdivide(curnode, s);
-                        if (s == NULL) {
-                            /* tree is invalid */
-                            if (err != NULL) {
-                                *err = HTM_EINV;
-                            }
-                            return -1;
-                        }
-                        ++level;
-                        ++curnode;
-                        continue;
-                    }
-                    /* scan points in leaf */
+                    return -1;
+                  }
+                  ++level;
+                  ++curnode;
+                  continue;
+                }
+              }
+            if(callback==NULL && coverage==HTM_INSIDE)
+              {
+                /* fully covered HTM triangle */
+                count += (int64_t) curcount;
+              }
+            else if(coverage==HTM_CONTAINS || coverage==HTM_INTERSECT
+                    || coverage==HTM_INSIDE)
+              {
+                uint64_t i;
+                for (i = index; i < index + curcount; ++i) {
+                  if (coverage==HTM_INSIDE
+                      || htm_s2ellipse_cv3(ellipse, (struct htm_v3*)
+                                           (tree->entries+i*tree->entry_size)))
                     {
-                        uint64_t i;
-                        for (i = index; i < index + curcount; ++i) {
-                          if (htm_s2ellipse_cv3(ellipse, (struct htm_v3*)(tree->entries+i*tree->entry_size))) {
-                                ++count;
-                            }
-                        }
+                      if(callback==NULL
+                         || callback(tree->entries+i*tree->entry_size,
+                                     tree->num_elements_per_entry,
+                                     tree->element_types, tree->element_names))
+                      ++count;
                     }
-                    break;
-                case HTM_INSIDE:
-                    /* fully covered HTM triangle */
-                    count += (int64_t) curcount;
-                    break;
-                default:
-                    /* HTM triangle does not intersect circle */
-                    break;
-            }
+                }
+              }
+
             /* ascend towards the root */
 ascend:
             --level;
@@ -2465,9 +2109,10 @@ ascend:
 }
 
 
-int64_t htm_tree_s2cpoly_count(const struct htm_tree *tree,
-                               const struct htm_s2cpoly *poly,
-                               enum htm_errcode *err)
+int64_t htm_tree_s2cpoly(const struct htm_tree *tree,
+                         const struct htm_s2cpoly *poly,
+                         enum htm_errcode *err,
+                         int (*callback)(void*, int, hid_t*, char **))
 {
     double stackab[2*256 + 4];
     struct _htm_path path;
@@ -2482,8 +2127,8 @@ int64_t htm_tree_s2cpoly_count(const struct htm_tree *tree,
         }
         return -1;
     }
-    if (tree->indexfd == -1) {
-        return htm_tree_s2cpoly_scan(tree, poly, err);
+    if (tree->index == MAP_FAILED) {
+      return htm_tree_s2cpoly_scan(tree, poly, err, callback);
     }
     nb = (2 * poly->n + 4) * sizeof(double);
     if (nb > sizeof(stackab)) {
@@ -2518,51 +2163,54 @@ int64_t htm_tree_s2cpoly_count(const struct htm_tree *tree,
             s += 1 + htm_varint_nfollow(*s);
             curnode->index = index;
 
-            switch (_htm_s2cpoly_htmcov(curnode, poly, ab)) {
-                case HTM_CONTAINS:
-                    if (level == 0) {
-                        /* no need to consider other roots */
-                        root = HTM_N3;
-                    } else {
-                        /* no need to consider other children of parent */
-                        curnode[-1].child = 4;
+            enum _htm_cov coverage=_htm_s2cpoly_htmcov(curnode, poly, ab);
+            if(coverage==HTM_CONTAINS)
+              {
+                if (level == 0) {
+                  /* no need to consider other roots */
+                  root = HTM_N3;
+                } else {
+                  /* no need to consider other children of parent */
+                  curnode[-1].child = 4;
+                }
+              }
+            if(coverage==HTM_CONTAINS || coverage==HTM_INTERSECT)
+              {
+                if (level < 20 && curcount >= tree->leafthresh) {
+                  s = _htm_subdivide(curnode, s);
+                  if (s == NULL) {
+                    /* tree is invalid */
+                    if (ab != stackab) {
+                      free(ab);
                     }
-                    /* fall-through */
-                case HTM_INTERSECT:
-                    if (level < 20 && curcount >= tree->leafthresh) {
-                        s = _htm_subdivide(curnode, s);
-                        if (s == NULL) {
-                            /* tree is invalid */
-                            if (ab != stackab) {
-                                free(ab);
-                            }
-                            if (err != NULL) {
-                                *err = HTM_EINV;
-                            }
-                            return -1;
-                        }
-                        ++level;
-                        ++curnode;
-                        continue;
+                    if (err != NULL) {
+                      *err = HTM_EINV;
                     }
-                    /* scan points in leaf */
-                    {
-                        uint64_t i;
-                        for (i = index; i < index + curcount; ++i) {
-                          if (htm_s2cpoly_cv3(poly, (struct htm_v3*)(tree->entries+i*tree->entry_size))) {
-                                ++count;
-                            }
-                        }
-                    }
-                    break;
-                case HTM_INSIDE:
-                    /* fully covered HTM triangle */
-                    count += (int64_t) curcount;
-                    break;
-                default:
-                    /* HTM triangle does not intersect circle */
-                    break;
-            }
+                    return -1;
+                  }
+                  ++level;
+                  ++curnode;
+                  continue;
+                }
+              }
+            if(callback==NULL && coverage==HTM_INSIDE)
+              {
+                /* fully covered HTM triangle */
+                count += (int64_t) curcount;
+              }
+            else if(coverage==HTM_CONTAINS || coverage==HTM_INTERSECT
+                    || coverage==HTM_INSIDE)
+              {
+                uint64_t i;
+                for (i = index; i < index + curcount; ++i) {
+                  if (htm_s2cpoly_cv3(poly, (struct htm_v3*)(tree->entries+i*tree->entry_size))) {
+                    if(callback(tree->entries+i*tree->entry_size, tree->num_elements_per_entry,
+                                tree->element_types, tree->element_names))
+                      ++count;
+                  }
+                }
+              }
+            
             /* ascend towards the root */
 ascend:
             --level;
@@ -2593,6 +2241,29 @@ ascend:
     }
     return count;
 }
+int64_t htm_tree_s2circle_count(const struct htm_tree *tree,
+                                const struct htm_v3 *center,
+                                double radius,
+                                enum htm_errcode *err)
+{
+  return htm_tree_s2circle(tree,center,radius,err,NULL);
+}
+
+
+int64_t htm_tree_s2ellipse_count(const struct htm_tree *tree,
+                                 const struct htm_s2ellipse *ellipse,
+                                 enum htm_errcode *err)
+{
+  return htm_tree_s2ellipse(tree,ellipse,err,NULL);
+}
+
+
+int64_t htm_tree_s2cpoly_count(const struct htm_tree *tree,
+                               const struct htm_s2cpoly *poly,
+                               enum htm_errcode *err)
+{
+  return htm_tree_s2cpoly(tree,poly,err,NULL);
+}
 
 
 struct htm_range htm_tree_s2circle_range(const struct htm_tree *tree,
@@ -2614,8 +2285,8 @@ struct htm_range htm_tree_s2circle_range(const struct htm_tree *tree,
         range.max = -1;
         return range;
     }
-    if (tree->indexfd == -1) {
-        range.max = htm_tree_s2circle_scan(tree, center, radius, err);
+    if (tree->index != MAP_FAILED) {
+        range.max = htm_tree_s2circle_scan(tree, center, radius, err, NULL);
         if (range.max >= 0) {
             range.min = range.max;
         }
@@ -2729,8 +2400,8 @@ struct htm_range htm_tree_s2ellipse_range(const struct htm_tree *tree,
         range.max = -1;
         return range;
     }
-    if (tree->indexfd == -1) {
-        range.max = htm_tree_s2ellipse_scan(tree, ellipse, err);
+    if (tree->index != MAP_FAILED) {
+        range.max = htm_tree_s2ellipse_scan(tree, ellipse, err, NULL);
         if (range.max >= 0) {
             range.min = range.max;
         }
@@ -2836,8 +2507,8 @@ struct htm_range htm_tree_s2cpoly_range(const struct htm_tree *tree,
         range.max = -1;
         return range;
     }
-    if (tree->indexfd == -1) {
-        range.max = htm_tree_s2cpoly_scan(tree, poly, err);
+    if (tree->index != MAP_FAILED) {
+        range.max = htm_tree_s2cpoly_scan(tree, poly, err, NULL);
         if (range.max >= 0) {
             range.min = range.max;
         }

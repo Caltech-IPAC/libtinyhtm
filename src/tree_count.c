@@ -144,8 +144,7 @@ int print_entry(void *entry, int num_elements, hid_t *types, char **names)
   return 1;
 }
 
-static void circle_count(const char * const treefile,
-                         const char * const datafile,
+static void circle_count(const char * const datafile,
                          char **argv)
 {
     struct htm_tree tree;
@@ -164,7 +163,7 @@ static void circle_count(const char * const treefile,
             htm_errmsg(ec));
     }
     r = get_double(argv[2]);
-    ec = htm_tree_init(&tree, treefile, datafile);
+    ec = htm_tree_init(&tree, datafile);
     if (ec != HTM_OK) {
         err("Failed to load tree and/or data file: %s", htm_errmsg(ec));
     }
@@ -175,15 +174,9 @@ static void circle_count(const char * const treefile,
             err("Failed to estimate points in circle: %s", htm_errmsg(ec));
         }
         print_range(&range);
-    } else if(print !=0) {
-        int64_t count = htm_tree_s2circle_callback(&tree, &cen, r, &ec, print_entry);
-        htm_tree_destroy(&tree);
-        if (ec != HTM_OK) {
-            err("Failed to count points in circle: %s", htm_errmsg(ec));
-        }
-        print_count(count);
     } else {
-        int64_t count = htm_tree_s2circle_count(&tree, &cen, r, &ec);
+        int64_t count = htm_tree_s2circle(&tree, &cen, r, &ec,
+                                          (print==0 ? NULL : print_entry));
         htm_tree_destroy(&tree);
         if (ec != HTM_OK) {
             err("Failed to count points in circle: %s", htm_errmsg(ec));
@@ -193,8 +186,7 @@ static void circle_count(const char * const treefile,
 }
 
 
-static void ellipse_count(const char * const treefile,
-                          const char * const datafile,
+static void ellipse_count(const char * const datafile,
                           char **argv)
 {
     struct htm_tree tree;
@@ -220,7 +212,7 @@ static void ellipse_count(const char * const treefile,
     if (ec != HTM_OK) {
         err("Invalid ellipse parameters: %s", htm_errmsg(ec));
     }
-    ec = htm_tree_init(&tree, treefile, datafile);
+    ec = htm_tree_init(&tree, datafile);
     if (ec != HTM_OK) {
         err("Failed to load tree and/or data file: %s", htm_errmsg(ec));
     }
@@ -231,15 +223,9 @@ static void ellipse_count(const char * const treefile,
             err("Failed to estimate points in ellipse: %s", htm_errmsg(ec));
         }
         print_range(&range);
-    } else if (print!=0) {
-        int64_t count = htm_tree_s2ellipse_callback(&tree, &ellipse, &ec, print_entry); 
-        htm_tree_destroy(&tree);
-        if (ec != HTM_OK) {
-            err("Failed to count points in ellipse: %s", htm_errmsg(ec));
-        }
-        print_count(count);
     } else {
-        int64_t count = htm_tree_s2ellipse_count(&tree, &ellipse, &ec); 
+        int64_t count = htm_tree_s2ellipse(&tree, &ellipse, &ec,
+                                           (print==0 ? NULL : print_entry));
         htm_tree_destroy(&tree);
         if (ec != HTM_OK) {
             err("Failed to count points in ellipse: %s", htm_errmsg(ec));
@@ -249,8 +235,7 @@ static void ellipse_count(const char * const treefile,
 }
 
 
-static void hull_count(const char * const treefile,
-                       const char * const datafile,
+static void hull_count(const char * const datafile,
                        const int argc,
                        char **argv)
 {
@@ -284,7 +269,7 @@ static void hull_count(const char * const treefile,
         err("Failed to compute convex hull: %s", htm_errmsg(ec));
     }
     free(verts);
-    ec = htm_tree_init(&tree, treefile, datafile);
+    ec = htm_tree_init(&tree, datafile);
     if (ec != HTM_OK) {
         free(poly);
         err("Failed to load tree and/or data file: %s", htm_errmsg(ec));
@@ -297,16 +282,9 @@ static void hull_count(const char * const treefile,
             err("Failed to estimate points in hull: %s", htm_errmsg(ec));
         }
         print_range(&range);
-    } else if (print != 0) {
-        int64_t count = htm_tree_s2cpoly_callback(&tree, poly, &ec, print_entry);
-        htm_tree_destroy(&tree);
-        free(poly);
-        if (ec != HTM_OK) {
-            err("Failed to count points in hull: %s", htm_errmsg(ec));
-        }
-        print_count(count);
     } else {
-        int64_t count = htm_tree_s2cpoly_count(&tree, poly, &ec);
+        int64_t count = htm_tree_s2cpoly(&tree, poly, &ec,
+                                         (print==0 ? NULL : print_entry));
         htm_tree_destroy(&tree);
         free(poly);
         if (ec != HTM_OK) {
@@ -317,8 +295,7 @@ static void hull_count(const char * const treefile,
 }
 
 
-static void test_tree(const char * const treefile,
-                      const char * const datafile,
+static void test_tree(const char * const datafile,
                       char **argv)
 {
     struct htm_tree tree;
@@ -327,7 +304,7 @@ static void test_tree(const char * const treefile,
     enum htm_errcode ec;
 
     r = get_double(argv[0]);
-    ec = htm_tree_init(&tree, treefile, datafile);
+    ec = htm_tree_init(&tree, datafile);
     if (ec != HTM_OK) {
         err("Failed to load tree and/or data file: %s", htm_errmsg(ec));
     }
@@ -396,7 +373,6 @@ static void usage(const char *prog)
            "--print    | -p              :  Print values of matching entries in\n"
            "                                addition to the total count\n"
            "--json     | -j              :  Print results in JSON format.\n"
-           "--tree     | -t <tree_file>  :  File name of tree index over\n"
            "                                the input points.\n",
            prog);
 }
@@ -404,7 +380,6 @@ static void usage(const char *prog)
 
 int main(int argc, char **argv)
 {
-    char *treefile = NULL;
     char *datafile = NULL;
 
     opterr = 0;
@@ -414,7 +389,6 @@ int main(int argc, char **argv)
               { "json", no_argument,       0, 'j' },
               { "estimate", no_argument,   0, 'e' },
               { "print", no_argument,      0, 'p' },
-              { "tree", required_argument, 0, 't' },
               { 0, 0, 0, 0 }
         };
         int option_index = 0;
@@ -435,16 +409,9 @@ int main(int argc, char **argv)
             case 'j':
                 json = 1;
                 break;
-            case 't':
-                treefile = optarg;
-                break;
             case '?':
-                if (optopt == 't') {
-                    err("Option --tree/-t requires an argument. "
-                        "Pass --help for usage instructions");
-                } else {
-                    err("Unknown option. Pass --help for usage instructions");
-                }
+              err("Unknown option. Pass --help for usage instructions");
+              break;
             default:
                 abort();
         }
@@ -458,28 +425,25 @@ int main(int argc, char **argv)
         if (argc - optind != 3) {
             err("Missing arguments. Pass --help for usage instructions.");
         }
-        circle_count(treefile, datafile, argv + optind);
+        circle_count(datafile, argv + optind);
     } else if (strcmp(argv[optind + 1], "ellipse") == 0) {
         optind += 2;
         if (argc - optind != 5) {
             err("Missing arguments. Pass --help for usage instructions.");
         }
-        ellipse_count(treefile, datafile, argv + optind);
+        ellipse_count(datafile, argv + optind);
     } else if (strcmp(argv[optind + 1], "hull") == 0) {
         optind += 2;
         if (argc - optind < 6 || (argc - optind) % 2 != 0) {
             err("Missing arguments. Pass --help for usage instructions.");
         }
-        hull_count(treefile, datafile, argc - optind, argv + optind);
+        hull_count(datafile, argc - optind, argv + optind);
     } else if (strcmp(argv[optind + 1], "test") == 0) {
         optind += 2;
         if (argc - optind != 1) {
             err("Missing arguments. Pass --help for usage instructions.");
         }
-        if (treefile == NULL) {
-            err("Please specify a tree file with --tree (-t).");
-        }
-        test_tree(treefile, datafile, argv + optind);
+        test_tree(datafile, argv + optind);
         if (json) {
             printf("{\"stat\":\"OK\"}\n");
         } else {

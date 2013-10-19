@@ -25,7 +25,6 @@ extern "C" {
 
 
 enum htm_errcode htm_tree_init(struct htm_tree *tree,
-                               const char * const treefile,
                                const char * const datafile)
 {
     struct stat sb;
@@ -34,7 +33,8 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
     int i;
     const size_t pagesz =  (size_t) sysconf(_SC_PAGESIZE);
     enum htm_errcode err = HTM_OK;
-    void *entries;
+    void *data_mmap;
+    size_t mmap_size, index_offset;
 
     /* set defaults */
     tree->leafthresh = 0;
@@ -46,10 +46,11 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
     tree->index = (const void *) MAP_FAILED;
     tree->indexsz = 0;
     tree->datasz = 0;
-    tree->indexfd = -1;
     tree->datafd = -1;
     tree->element_types=NULL;
     tree->element_names=NULL;
+
+    index_offset=0;
 
     /* check inputs */
     if (tree == NULL || datafile == NULL) {
@@ -63,7 +64,7 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
        mmap with raw calls */
     {
       hid_t h5data;
-      hid_t htm_dataset;
+      hid_t htm_dataset, index_dataset;
       hid_t htm_type;
       size_t i;
 
@@ -73,7 +74,7 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
         return HTM_EIO;
       }
 
-      htm_dataset=H5Dopen(h5data,"htm", H5P_DEFAULT);
+      htm_dataset=H5Dopen(h5data,"data", H5P_DEFAULT);
       if (htm_dataset < 0 ) {
         H5Fclose(h5data);
         return HTM_EIO;
@@ -106,6 +107,22 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
         }
 
       H5Dclose(htm_dataset);
+
+      /* memory map the index (if there is one) */
+
+      index_dataset=H5Dopen(h5data,"htm_index", H5P_DEFAULT);
+      if (index_dataset < 0 ) {
+        H5Fclose(h5data);
+      } else {
+        index_offset = H5Dget_offset(index_dataset);
+        tree->indexsz = H5Dget_storage_size(index_dataset);
+
+        if (tree->indexsz % pagesz != 0) {
+          tree->indexsz += pagesz - tree->indexsz % pagesz;
+        }
+        H5Dclose(index_dataset);
+      }
+
       H5Fclose(h5data);
     }
 
@@ -126,51 +143,33 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
     /*     tree->datasz += pagesz - tree->datasz % pagesz; */
     /* } */
 
-    entries = mmap(
-        NULL, tree->datasz+tree->offset, PROT_READ, MAP_SHARED | MAP_NORESERVE,
+    mmap_size=(tree->datasz+tree->offset > tree->indexsz + index_offset)
+      ? (tree->datasz+tree->offset) : (tree->indexsz + index_offset);
+
+    data_mmap = mmap(
+        NULL, mmap_size, PROT_READ, MAP_SHARED | MAP_NORESERVE,
         tree->datafd, 0);
 
-    tree->entries=entries+tree->offset;
+    tree->entries=data_mmap+tree->offset;
                                 
-    if (entries == MAP_FAILED) {
+    if (data_mmap == MAP_FAILED) {
         err = HTM_EMMAN;
         goto cleanup;
     }
 
-    if (madvise(entries, tree->datasz+tree->offset, MADV_RANDOM) != 0) {
+    if (madvise(data_mmap, tree->datasz+tree->offset, MADV_RANDOM) != 0) {
         err = HTM_EMMAN;
         goto cleanup;
     }
 
-    /* memory map treefile (if there is one) */
-    if (treefile == NULL) {
-        tree->count = count;
+    /* Make sure index exists */
+    if(index_offset==0)
+      {
+        tree->count=count;
         return HTM_OK;
-    }
-    if (stat(treefile, &sb) != 0) {
-        err = HTM_EIO;
-        goto cleanup;
-    }
-    tree->indexsz = (size_t) sb.st_size;
-    if (tree->indexsz % pagesz != 0) {
-        tree->indexsz += pagesz - tree->indexsz % pagesz;
-    }
-    tree->indexfd = open(treefile, O_RDONLY);
-    if (tree->indexfd == -1) {
-        err = HTM_EIO;
-        goto cleanup;
-    }
-    tree->index = (const void *) mmap(
-        NULL, tree->indexsz, PROT_READ, MAP_SHARED | MAP_NORESERVE,
-        tree->indexfd, 0);
-    if ((void *) tree->index == MAP_FAILED) {
-        err = HTM_EMMAN;
-        goto cleanup;
-    }
-    if (madvise((void *) tree->index, tree->indexsz, MADV_RANDOM) != 0) {
-        err = HTM_EMMAN;
-        goto cleanup;
-    }
+      }
+
+    tree->index=data_mmap+index_offset;
 
     /* parse tree file header */
     s = (const unsigned char *) tree->index;
@@ -221,16 +220,8 @@ void htm_tree_destroy(struct htm_tree *tree)
         close(tree->datafd);
         tree->datafd = -1;
     }
-    /* unmap and close tree file */
-    if (tree->index != MAP_FAILED) {
-        munmap((void *)tree->index, tree->indexsz);
-        tree->index = (const void *) MAP_FAILED;
-    }
+    tree->index = (const void *) MAP_FAILED;
     tree->indexsz = 0;
-    if (tree->indexfd != -1) {
-        close(tree->indexfd);
-        tree->indexfd = - 1;
-    }
     /* Deallocate names and types */
     if(tree->element_names!=NULL)
       {
@@ -256,7 +247,7 @@ enum htm_errcode htm_tree_lock(struct htm_tree *tree, size_t datathresh)
     if (tree == NULL) {
         return HTM_ENULLPTR;
     }
-    if (tree->indexfd != -1) {
+    if (tree->index != MAP_FAILED) {
         if (mlock(tree->index, tree->indexsz) != 0) {
             return HTM_ENOMEM;
         }
@@ -273,7 +264,8 @@ enum htm_errcode htm_tree_lock(struct htm_tree *tree, size_t datathresh)
 int64_t htm_tree_s2circle_scan(const struct htm_tree *tree,
                                const struct htm_v3 *center,
                                double radius,
-                               enum htm_errcode *err)
+                               enum htm_errcode *err,
+                               int (*callback)(void*, int, hid_t*, char **))
 {
     double dist2;
     int64_t count;
@@ -294,7 +286,13 @@ int64_t htm_tree_s2circle_scan(const struct htm_tree *tree,
     dist2 = 4.0 * dist2 * dist2;
     count = 0;
     for (i = 0, count = 0; i < tree->count; ++i) {
-      if (htm_v3_dist2(center, (struct htm_v3*)(tree->entries+i*tree->entry_size)) <= dist2) {
+      if (htm_v3_dist2(center,
+                       (struct htm_v3*)(tree->entries+i*tree->entry_size))
+          <= dist2) {
+          if(callback==NULL
+             || callback(tree->entries+i*tree->entry_size,
+                         tree->num_elements_per_entry,tree->element_types,
+                         tree->element_names))
             ++count;
         }
     }
@@ -304,7 +302,8 @@ int64_t htm_tree_s2circle_scan(const struct htm_tree *tree,
 
 int64_t htm_tree_s2ellipse_scan(const struct htm_tree *tree,
                                 const struct htm_s2ellipse *ellipse,
-                                enum htm_errcode *err)
+                                enum htm_errcode *err,
+                                int (*callback)(void*, int, hid_t*, char **))
 {
     int64_t count;
     uint64_t i;
@@ -318,6 +317,10 @@ int64_t htm_tree_s2ellipse_scan(const struct htm_tree *tree,
     count = 0;
     for (i = 0, count = 0; i < tree->count; ++i) {
       if (htm_s2ellipse_cv3(ellipse, (struct htm_v3*)(tree->entries+i*tree->entry_size)) != 0) {
+          if(callback==NULL
+             || callback(tree->entries+i*tree->entry_size,
+                         tree->num_elements_per_entry,tree->element_types,
+                         tree->element_names))
             ++count;
         }
     }
@@ -327,7 +330,8 @@ int64_t htm_tree_s2ellipse_scan(const struct htm_tree *tree,
 
 int64_t htm_tree_s2cpoly_scan(const struct htm_tree *tree,
                               const struct htm_s2cpoly *poly,
-                              enum htm_errcode *err)
+                              enum htm_errcode *err,
+                              int (*callback)(void*, int, hid_t*, char **))
 {
     int64_t count;
     uint64_t i;
@@ -341,6 +345,10 @@ int64_t htm_tree_s2cpoly_scan(const struct htm_tree *tree,
     count = 0;
     for (i = 0, count = 0; i < tree->count; ++i) {
       if (htm_s2cpoly_cv3(poly, (struct htm_v3*)(tree->entries+i*tree->entry_size)) != 0) {
+          if(callback==NULL
+             || callback(tree->entries+i*tree->entry_size,
+                         tree->num_elements_per_entry,tree->element_types,
+                         tree->element_names))
             ++count;
         }
     }
