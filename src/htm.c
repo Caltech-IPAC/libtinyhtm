@@ -2204,8 +2204,9 @@ int64_t htm_tree_s2cpoly(const struct htm_tree *tree,
                 uint64_t i;
                 for (i = index; i < index + curcount; ++i) {
                   if (htm_s2cpoly_cv3(poly, (struct htm_v3*)(tree->entries+i*tree->entry_size))) {
-                    if(callback(tree->entries+i*tree->entry_size, tree->num_elements_per_entry,
-                                tree->element_types, tree->element_names))
+                    if(callback==NULL
+                       || callback(tree->entries+i*tree->entry_size, tree->num_elements_per_entry,
+                                   tree->element_types, tree->element_names))
                       ++count;
                   }
                 }
