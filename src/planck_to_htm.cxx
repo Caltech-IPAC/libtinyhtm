@@ -1,4 +1,3 @@
-#include <valarray>
 #include <memory>
 #include <string>
 #include <map>
