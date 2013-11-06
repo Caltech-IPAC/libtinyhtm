@@ -60,7 +60,7 @@ H5::DataType planck_tod_entry::types[3]={H5::PredType::NATIVE_DOUBLE,
 
 int main(int argc, char *argv[])
 {
-  const size_t memsz = sizeof(planck_tod_entry)*16*1024*1024;
+  const size_t memsz = sizeof(planck_tod_entry)*16*64*1024*1024;
   const size_t ioblksz(sizeof(planck_tod_entry)*32*1024);
   mem_params mem(memsz, ioblksz);
   const int htm_depth(20);
