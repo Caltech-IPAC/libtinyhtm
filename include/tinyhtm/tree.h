@@ -7,6 +7,7 @@
 #ifndef HTM_TREE_H
 #define HTM_TREE_H
 
+#include <functional>
 #include "geometry.h"
 #include <hdf5.h>
 
@@ -80,7 +81,7 @@ int64_t htm_tree_s2circle_scan(const struct htm_tree *tree,
                                const struct htm_v3 *center,
                                double radius,
                                enum htm_errcode *err,
-                               int (*callback)(void*, int, hid_t*, char **));
+                               std::function<int(void*, int, hid_t*, char **)> callback);
 
 /** Returns the number of points in \p tree that are inside
     the given spherical ellipse.
@@ -96,7 +97,7 @@ int64_t htm_tree_s2circle_scan(const struct htm_tree *tree,
 int64_t htm_tree_s2ellipse_scan(const struct htm_tree *tree,
                                 const struct htm_s2ellipse *ellipse,
                                 enum htm_errcode *err,
-                                int (*callback)(void*, int, hid_t*, char **));
+                                std::function<int(void*, int, hid_t*, char **)> callback);
 
 /** Returns the number of points in \p tree that are inside
     the given spherical convex polygon.
@@ -112,7 +113,7 @@ int64_t htm_tree_s2ellipse_scan(const struct htm_tree *tree,
 int64_t htm_tree_s2cpoly_scan(const struct htm_tree *tree,
                               const struct htm_s2cpoly *poly,
                               enum htm_errcode *err,
-                              int (*callback)(void*, int, hid_t*, char **));
+                              std::function<int(void*, int, hid_t*, char **)> callback);
 
 /** Returns the number of points in \p tree that are inside the
     spherical circle with the given center and radius.
@@ -132,7 +133,7 @@ int64_t htm_tree_s2circle(const struct htm_tree *tree,
                           const struct htm_v3 *center,
                           double radius,
                           enum htm_errcode *err,
-                          int (*callback)(void*, int, hid_t*, char **));
+                          std::function<int(void*, int, hid_t*, char **)> callback);
 
 
 /** Returns the number of points in \p tree that are inside
@@ -151,7 +152,7 @@ int64_t htm_tree_s2ellipse_count(const struct htm_tree *tree,
 int64_t htm_tree_s2ellipse(const struct htm_tree *tree,
                            const struct htm_s2ellipse *ellipse,
                            enum htm_errcode *err,
-                           int (*callback)(void*, int, hid_t*, char **));
+                           std::function<int(void*, int, hid_t*, char **)> callback);
 
 /** Returns the number of points in \p tree that are inside
     the given spherical convex polygon.
@@ -169,7 +170,7 @@ int64_t htm_tree_s2cpoly_count(const struct htm_tree *tree,
 int64_t htm_tree_s2cpoly(const struct htm_tree *tree,
                          const struct htm_s2cpoly *poly,
                          enum htm_errcode *err,
-                         int (*callback)(void*, int, hid_t*, char **));
+                         std::function<int(void*, int, hid_t*, char **)> callback);
 
 /** Returns a lower and upper bound on the number of points in \p tree
     that are inside the spherical circle with the given center and radius.
