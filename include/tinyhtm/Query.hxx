@@ -24,12 +24,13 @@ namespace tinyhtm
     struct htm_s2cpoly *poly;
     
     Query(const std::string &Data_file,
-          char *args[], const int &n);
+          const std::string &query_shape,
+          const std::string &vertex_string);
 
     int64_t count() const;
     std::pair<int64_t,int64_t> range() const;
     int64_t callback(int (*fn)(void *entry, int num_elements,
-                             hid_t *types, char **names)) const;
+                               hid_t *types, char **names)) const;
 
     ~Query()
     {

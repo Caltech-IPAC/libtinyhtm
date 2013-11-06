@@ -5,69 +5,80 @@
 namespace tinyhtm
 {
   Query::Query(const std::string &data_file,
-               char *args[], const int &n): tree(data_file),
-                                            poly(nullptr)
+               const std::string &query_shape,
+               const std::string &vertex_string): tree(data_file),
+                                                  poly(nullptr)
   {
-    if(args[0]==std::string("circle"))
+    std::stringstream ss(vertex_string);
+    std::vector<double> vertices;
+    double x;
+    ss >> x;
+    while(ss)
+      {
+        vertices.push_back(x);
+        ss >> x;
+      }
+
+    if(query_shape=="circle")
       {
         type=tinyhtm::Query::Type::circle;
-        if(n!=4)
+        if(vertices.size()!=3)
           {
             std::stringstream ss;
-            ss << "Wrong number of arguments for circle.  Need 4 but have "
-               << n;
+            ss << "Wrong number of arguments for circle.  Need 3 but have "
+               << vertices.size()
+               << ": " << vertex_string << "\n"
+               << vertices[0] << "\n"
+               << vertices[1] << "\n"
+               << vertices[2] << "\n"
+               << vertices[3] << "\n";
             throw Exception(ss.str());
           }
-        center=Cartesian(Spherical(boost::lexical_cast<double>(args[1]),
-                                   boost::lexical_cast<double>(args[2])));
-        r=boost::lexical_cast<double>(args[3]);
+        center=Cartesian(Spherical(vertices[0],vertices[1]));
+        r=vertices[2];
       }
-    else if(args[0]==std::string("ellipse"))
+    else if(query_shape=="ellipse")
       {
         type=tinyhtm::Query::Type::ellipse;
-        if(n!=6)
+        if(vertices.size()!=5)
           {
             std::stringstream ss;
-            ss << "Wrong number of arguments for ellipse.  Need 6 but have "
-               << n;
+            ss << "Wrong number of arguments for ellipse.  Need 5 but have "
+               << vertices.size();
             throw Exception(ss.str());
           }
-        ellipse=Ellipse(Spherical(boost::lexical_cast<double>(args[1]),
-                                  boost::lexical_cast<double>(args[2])),
-                        boost::lexical_cast<double>(args[3]),
-                        boost::lexical_cast<double>(args[4]),
-                        boost::lexical_cast<double>(args[5]));
+        ellipse=Ellipse(Spherical(vertices[0],vertices[1]),
+                        vertices[2],vertices[3],vertices[4]);
       }
-    else if(args[0]==std::string("polygon"))
+    else if(query_shape=="polygon")
       {
         type=tinyhtm::Query::Type::polygon;
-        if(n<7)
+        if(vertices.size()<6)
           {
             std::stringstream ss;
             ss << "Not enough arguments for polygon.  "
-              "Need at least 7 but only have "
-               << n;
+              "Need at least 6 but only have "
+               << vertices.size();
             throw Exception(ss.str());
           }
-        if(n%2!=1)
+        if(vertices.size()%2!=0)
           {
             std::stringstream ss;
             ss << "Need an even number of arguments for polygon, "
-               << "but was given " << n-1;
+               << "but was given " << vertices.size();
             throw Exception(ss.str());
           }
-        for(int j=1;j<n;j+=2)
+        for(size_t j=0;j<vertices.size();j+=2)
           {
-            Cartesian c(Spherical(boost::lexical_cast<double>(args[j]),
-                                  boost::lexical_cast<double>(args[j+1])));
+            Cartesian c(Spherical(vertices[j],vertices[j+1]));
             verts.push_back(c.v3);
           }
         enum htm_errcode ec;
         poly=htm_s2cpoly_hull(verts.data(), verts.size(), &ec);
-        if(poly==NULL || ec!=HTM_OK)
+        if(poly==nullptr || ec!=HTM_OK)
           throw Exception("Can not allocate polygon");
       }
     else
-      throw Exception(std::string("Bad query type: ") + args[0]);
+      throw Exception(std::string("Bad query shape: ") + query_shape);
   }
 }
