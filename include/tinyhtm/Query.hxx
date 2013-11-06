@@ -29,8 +29,8 @@ namespace tinyhtm
 
     int64_t count() const;
     std::pair<int64_t,int64_t> range() const;
-    int64_t callback(int (*fn)(void *entry, int num_elements,
-                               hid_t *types, char **names)) const;
+    int64_t callback(std::function<int (void *entry, int num_elements,
+                                        hid_t *types, char **names)> fn) const;
 
     ~Query()
     {
