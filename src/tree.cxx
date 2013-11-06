@@ -85,15 +85,17 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
       tree->entry_size=H5Tget_size(htm_type);
 
       tree->num_elements_per_entry=H5Tget_nmembers(htm_type);
-      tree->element_types=malloc(sizeof(H5T_class_t)
-                                 *tree->num_elements_per_entry);
+      tree->element_types=
+        static_cast<hid_t*>(malloc(sizeof(H5T_class_t)
+                                   *tree->num_elements_per_entry));
       if(tree->element_types==NULL)
         {
           H5Dclose(htm_dataset);
           H5Fclose(h5data);
           return HTM_ENOMEM;
         }
-      tree->element_names=malloc(sizeof(char*)*tree->num_elements_per_entry);
+      tree->element_names=
+        static_cast<char**>(malloc(sizeof(char*)*tree->num_elements_per_entry));
       if(tree->element_names==NULL)
         {
           H5Dclose(htm_dataset);

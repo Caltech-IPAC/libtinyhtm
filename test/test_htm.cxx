@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <cstdint>
 
 #include "tinyhtm/htm.h"
 #include "cmp.h"
@@ -331,9 +332,9 @@ static void test_random_points()
     int level, ret;
     const size_t n = 10000;
 
-    pts = malloc(sizeof(struct htm_v3p) * n);
+    pts = static_cast<htm_v3p *>(malloc(sizeof(struct htm_v3p) * n));
     HTM_ASSERT(pts != NULL, "memory allocation failed");
-    ids = malloc(sizeof(int64_t) * n);
+    ids = static_cast<int64_t*>(malloc(sizeof(int64_t) * n));
     HTM_ASSERT(ids != NULL, "memory allocation failed");
 
     for (level = 0; level <= HTM_MAX_LEVEL; ++level) {

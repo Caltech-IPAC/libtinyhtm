@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <cstdint>
 
 #include "tinyhtm/select.h"
 #include "tinyhtm/geometry.h"
@@ -690,7 +691,8 @@ int htm_puffpoly_cv3( const struct htm_puff_poly * pp, const struct htm_v3 * v )
 //  polygon --> puffed polygon
 struct htm_puff_poly *   puff_polygon( const struct htm_s2cpoly pgon, const enum puff_type h2p, const double by ) {
     
-    struct htm_puff_poly * ppgon = malloc( sizeof( struct htm_puff_poly ));
+  struct htm_puff_poly * ppgon
+    = static_cast<htm_puff_poly*>(malloc( sizeof( struct htm_puff_poly )));
     
     ppgon->polygon = pgon;
     ppgon->pufftyp = h2p;      //  How2Puff
@@ -720,7 +722,8 @@ struct htm_puff_poly *   puff_polygon( const struct htm_s2cpoly pgon, const enum
 //  puffed polygon --> polygon
 struct htm_s2cpoly * unpuff_polygon( struct htm_puff_poly * ppgon ) {
     
-    struct htm_s2cpoly * pgon = malloc( sizeof( struct htm_s2cpoly ));
+  struct htm_s2cpoly * pgon
+    = static_cast<htm_s2cpoly *>(malloc( sizeof( struct htm_s2cpoly )));
     
     *pgon = ppgon->polygon;
     

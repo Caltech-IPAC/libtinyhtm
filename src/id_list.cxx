@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <cstdint>
 
 #include "tinyhtm/geometry.h"
 #include "tinyhtm/htm.h"

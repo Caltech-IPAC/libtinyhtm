@@ -504,7 +504,7 @@ static struct htm_v3 * gen_hemis(const struct htm_v3 *v, size_t n)
     size_t i;
 
     HTM_ASSERT(n != 0 && v != NULL, "illegal arguments to gen_hemis");
-    points = malloc((n + 1) * sizeof(struct htm_v3));
+    points = static_cast<htm_v3 *>(malloc((n + 1) * sizeof(struct htm_v3)));
     HTM_ASSERT(points != NULL, "memory allocation failed");
     htm_v3_normalize(&p, v);
     htm_v3_ne(&north, &east, &p);

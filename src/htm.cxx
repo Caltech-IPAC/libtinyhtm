@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sstream>
 
 #include "tinyhtm/htm.h"
 #include "tinyhtm/tree.h"
@@ -1051,7 +1052,7 @@ enum htm_errcode htm_v3p_idsort(struct htm_v3p *points,
 {
     struct _htm_path path;
     size_t roots[HTM_NROOTS + 1];
-    enum htm_root r;
+    int r;
 
     if (n == 0) {
         return HTM_ELEN;
@@ -1063,7 +1064,7 @@ enum htm_errcode htm_v3p_idsort(struct htm_v3p *points,
     _htm_rootsort(roots, points, (unsigned char *) ids, n);
     for (r = HTM_S0; r <= HTM_N3; ++r) {
         if (roots[r] < roots[r + 1]) {
-            _htm_path_root(&path, r);
+            _htm_path_root(&path, static_cast<htm_root>(r));
             _htm_path_sort(&path, points + roots[r],
                                  points + roots[r + 1], ids + roots[r], level);
         }
@@ -1166,7 +1167,7 @@ enum htm_errcode htm_tri_init(struct htm_tri *tri, int64_t id)
     tri->id = id;
     tri->level = level;
     shift = 2*level;
-    r = (id >> shift) & 0x7;
+    r = static_cast<htm_root>((id >> shift) & 0x7);
     v0 = *_htm_root_vert[r*3];
     v1 = *_htm_root_vert[r*3 + 1];
     v2 = *_htm_root_vert[r*3 + 2];
@@ -1226,7 +1227,7 @@ enum htm_errcode alt_htm_tri_init( struct htm_tri *tri, int64_t id ) {
     tri->id = id;
     tri->level = level;
     shift = 2*level;
-    r = (id >> shift) & 0x7;
+    r = static_cast<htm_root>((id >> shift) & 0x7);
     v0 = *_htm_root_vert[r*3];
     v1 = *_htm_root_vert[r*3 + 1];
     v2 = *_htm_root_vert[r*3 + 2];
@@ -1277,7 +1278,6 @@ struct htm_ids * htm_s2circle_ids(struct htm_ids *ids,
 {
     struct _htm_path path;
     double dist2;
-    enum htm_root root;
     int efflevel;
 
     if (center == NULL) {
@@ -1330,10 +1330,10 @@ struct htm_ids * htm_s2circle_ids(struct htm_ids *ids,
     dist2 = sin(radius * 0.5 * HTM_RAD_PER_DEG);
     dist2 = 4.0 * dist2 * dist2;
 
-    for (root = HTM_S0; root <= HTM_N3; ++root) {
+    for (int root = HTM_S0; root <= HTM_N3; ++root) {
         struct _htm_node *curnode = path.node;
         int curlevel = 0;
-        _htm_path_root(&path, root);
+        _htm_path_root(&path, static_cast<htm_root>(root));
 
         while (1) {
             switch (_htm_s2circle_htmcov(curnode, center, dist2)) {
@@ -1423,7 +1423,6 @@ struct htm_ids * htm_s2ellipse_ids(struct htm_ids *ids,
                                    enum htm_errcode *err)
 {
     struct _htm_path path;
-    enum htm_root root;
     int efflevel;
 
     if (ellipse == NULL) {
@@ -1452,10 +1451,10 @@ struct htm_ids * htm_s2ellipse_ids(struct htm_ids *ids,
     }
 
     efflevel = level;
-    for (root = HTM_S0; root <= HTM_N3; ++root) {
+    for (int root = HTM_S0; root <= HTM_N3; ++root) {
         struct _htm_node *curnode = path.node;
         int curlevel = 0;
-        _htm_path_root(&path, root);
+        _htm_path_root(&path, static_cast<htm_root>(root));
 
         while (1) {
             switch (_htm_s2ellipse_htmcov(curnode, ellipse)) {
@@ -1546,7 +1545,6 @@ struct htm_ids * htm_s2cpoly_ids(struct htm_ids *ids,
 {
     double stackab[2*256 + 4];
     struct _htm_path path;
-    enum htm_root root;
     double *ab;
     size_t nb;
     int efflevel;
@@ -1591,10 +1589,10 @@ struct htm_ids * htm_s2cpoly_ids(struct htm_ids *ids,
 
     efflevel = level;
 
-    for (root = HTM_S0; root <= HTM_N3; ++root) {
+    for (int root = HTM_S0; root <= HTM_N3; ++root) {
         struct _htm_node *curnode = path.node;
         int curlevel = 0;
-        _htm_path_root(&path, root);
+        _htm_path_root(&path, static_cast<htm_root>(root));
 
         while (1) {
             switch (_htm_s2cpoly_htmcov(curnode, poly, ab)) {
@@ -1795,7 +1793,7 @@ char * bin_txt( ULL rx ) {
     int   vi = TRUE;
     int   bp = NB-1;
     int   cp = 0;
-    char *tx = malloc( NC );
+    char *tx = static_cast<char*>(malloc( NC ));
     memset( tx, EOSC, NC );
     if ( vi ) {
         tx[ cp++ ] = ' ';
@@ -1824,9 +1822,18 @@ char * bin_txt( ULL rx ) {
 //  static char * str128( U64_TYPE u128 ) {
 char * str128( U64_TYPE u128 ) {
     char *  rtn = (char *)malloc( 1024 );    //  consumer should free() when done
-    if ( 0 == rtn) return( "insufficient memory" );
-    U64_TYPE u64 = u128;
-    sprintf( rtn, "%" PRIu64, u64 );
+    std::stringstream ss;
+    if ( 0 == rtn)
+      {
+        ss << "insufficient memory";
+      }
+    else
+      {
+        U64_TYPE u64 = u128;
+        ss << u64;
+      }
+    strcpy(rtn,ss.str().c_str());
+    // FIXME:  Why are we flushing stdout?
     fflush( stdout );
     return( rtn );
 }
@@ -1865,7 +1872,6 @@ int64_t htm_tree_s2circle(const struct htm_tree *tree,
                           int (*callback)(void*, int, hid_t*, char **))
 {
     struct _htm_path path;
-    enum htm_root root;
     double d2;
     int64_t count;
 
@@ -1890,7 +1896,7 @@ int64_t htm_tree_s2circle(const struct htm_tree *tree,
     d2 = sin(radius * 0.5 * HTM_RAD_PER_DEG);
     d2 = 4.0 * d2 * d2;
 
-    for (root = HTM_S0; root <= HTM_N3; ++root) {
+    for (int root = HTM_S0; root <= HTM_N3; ++root) {
         struct _htm_node *curnode = path.node;
         const unsigned char *s = tree->root[root];
         uint64_t index = 0;
@@ -1900,7 +1906,7 @@ int64_t htm_tree_s2circle(const struct htm_tree *tree,
             /* root contains no points */
             continue;
         }
-        _htm_path_root(&path, root);
+        _htm_path_root(&path, static_cast<htm_root>(root));
 
         while (1) {
             uint64_t curcount = htm_varint_decode(s);
@@ -1950,10 +1956,10 @@ int64_t htm_tree_s2circle(const struct htm_tree *tree,
                 for (i = index; i < index + curcount; ++i) {
                   if (coverage==HTM_INSIDE
                       || htm_v3_dist2(center,(struct htm_v3*)
-                                      (tree->entries+i*tree->entry_size)) <= d2)
+                                      (static_cast<char*>(tree->entries)+i*tree->entry_size)) <= d2)
                     {
                       if(callback==NULL
-                         || callback(tree->entries+i*tree->entry_size,
+                         || callback(static_cast<char*>(tree->entries)+i*tree->entry_size,
                                      tree->num_elements_per_entry,
                                      tree->element_types,
                                      tree->element_names))
@@ -1996,7 +2002,6 @@ int64_t htm_tree_s2ellipse(const struct htm_tree *tree,
                            int (*callback)(void*, int, hid_t*, char **))
 {
     struct _htm_path path;
-    enum htm_root root;
     int64_t count;
 
     if (tree == NULL || ellipse == NULL) {
@@ -2011,7 +2016,7 @@ int64_t htm_tree_s2ellipse(const struct htm_tree *tree,
 
     count = 0;
 
-    for (root = HTM_S0; root <= HTM_N3; ++root) {
+    for (int root = HTM_S0; root <= HTM_N3; ++root) {
         struct _htm_node *curnode = path.node;
         const unsigned char *s = tree->root[root];
         uint64_t index = 0;
@@ -2021,7 +2026,7 @@ int64_t htm_tree_s2ellipse(const struct htm_tree *tree,
             /* root contains no points */
             continue;
         }
-        _htm_path_root(&path, root);
+        _htm_path_root(&path, static_cast<htm_root>(root));
 
         while (1) {
             uint64_t curcount = htm_varint_decode(s);
@@ -2069,10 +2074,10 @@ int64_t htm_tree_s2ellipse(const struct htm_tree *tree,
                 for (i = index; i < index + curcount; ++i) {
                   if (coverage==HTM_INSIDE
                       || htm_s2ellipse_cv3(ellipse, (struct htm_v3*)
-                                           (tree->entries+i*tree->entry_size)))
+                                           (static_cast<char*>(tree->entries)+i*tree->entry_size)))
                     {
                       if(callback==NULL
-                         || callback(tree->entries+i*tree->entry_size,
+                         || callback(static_cast<char*>(tree->entries)+i*tree->entry_size,
                                      tree->num_elements_per_entry,
                                      tree->element_types, tree->element_names))
                       ++count;
@@ -2116,7 +2121,6 @@ int64_t htm_tree_s2cpoly(const struct htm_tree *tree,
 {
     double stackab[2*256 + 4];
     struct _htm_path path;
-    enum htm_root root;
     double *ab;
     size_t nb;
     int64_t count;
@@ -2144,7 +2148,7 @@ int64_t htm_tree_s2cpoly(const struct htm_tree *tree,
     }
     count = 0;
 
-    for (root = HTM_S0; root <= HTM_N3; ++root) {
+    for (int root = HTM_S0; root <= HTM_N3; ++root) {
         struct _htm_node *curnode = path.node;
         const unsigned char *s = tree->root[root];
         uint64_t index = 0;
@@ -2154,7 +2158,7 @@ int64_t htm_tree_s2cpoly(const struct htm_tree *tree,
             /* root contains no points */
             continue;
         }
-        _htm_path_root(&path, root);
+        _htm_path_root(&path, static_cast<htm_root>(root));
 
         while (1) {
             uint64_t curcount = htm_varint_decode(s);
@@ -2203,9 +2207,9 @@ int64_t htm_tree_s2cpoly(const struct htm_tree *tree,
               {
                 uint64_t i;
                 for (i = index; i < index + curcount; ++i) {
-                  if (htm_s2cpoly_cv3(poly, (struct htm_v3*)(tree->entries+i*tree->entry_size))) {
+                  if (htm_s2cpoly_cv3(poly, (struct htm_v3*)(static_cast<char*>(tree->entries)+i*tree->entry_size))) {
                     if(callback==NULL
-                       || callback(tree->entries+i*tree->entry_size, tree->num_elements_per_entry,
+                       || callback(static_cast<char*>(tree->entries)+i*tree->entry_size, tree->num_elements_per_entry,
                                    tree->element_types, tree->element_names))
                       ++count;
                   }
@@ -2273,7 +2277,6 @@ struct htm_range htm_tree_s2circle_range(const struct htm_tree *tree,
                                          enum htm_errcode *err)
 {
     struct _htm_path path;
-    enum htm_root root;
     double d2;
     struct htm_range range;
 
@@ -2305,7 +2308,7 @@ struct htm_range htm_tree_s2circle_range(const struct htm_tree *tree,
     d2 = sin(radius * 0.5 * HTM_RAD_PER_DEG);
     d2 = 4.0 * d2 * d2;
 
-    for (root = HTM_S0; root <= HTM_N3; ++root) {
+    for (int root = HTM_S0; root <= HTM_N3; ++root) {
         struct _htm_node *curnode = path.node;
         const unsigned char *s = tree->root[root];
         int level = 0;
@@ -2314,7 +2317,7 @@ struct htm_range htm_tree_s2circle_range(const struct htm_tree *tree,
             /* root contains no points */
             continue;
         }
-        _htm_path_root(&path, root);
+        _htm_path_root(&path, static_cast<htm_root>(root));
 
         while (1) {
             uint64_t curcount = htm_varint_decode(s);
@@ -2389,7 +2392,6 @@ struct htm_range htm_tree_s2ellipse_range(const struct htm_tree *tree,
                                           enum htm_errcode *err)
 {
     struct _htm_path path;
-    enum htm_root root;
     struct htm_range range;
 
     range.min = 0;
@@ -2409,7 +2411,7 @@ struct htm_range htm_tree_s2ellipse_range(const struct htm_tree *tree,
         return range;
     }
 
-    for (root = HTM_S0; root <= HTM_N3; ++root) {
+    for (int root = HTM_S0; root <= HTM_N3; ++root) {
         struct _htm_node *curnode = path.node;
         const unsigned char *s = tree->root[root];
         int level = 0;
@@ -2418,7 +2420,7 @@ struct htm_range htm_tree_s2ellipse_range(const struct htm_tree *tree,
             /* root contains no points */
             continue;
         }
-        _htm_path_root(&path, root);
+        _htm_path_root(&path, static_cast<htm_root>(root));
 
         while (1) {
             uint64_t curcount = htm_varint_decode(s);
@@ -2494,7 +2496,6 @@ struct htm_range htm_tree_s2cpoly_range(const struct htm_tree *tree,
 {
     double stackab[2*256 + 4];
     struct _htm_path path;
-    enum htm_root root;
     double *ab;
     size_t nb;
     struct htm_range range;
@@ -2529,7 +2530,7 @@ struct htm_range htm_tree_s2cpoly_range(const struct htm_tree *tree,
         ab = stackab;
     }
 
-    for (root = HTM_S0; root <= HTM_N3; ++root) {
+    for (int root = HTM_S0; root <= HTM_N3; ++root) {
         struct _htm_node *curnode = path.node;
         const unsigned char *s = tree->root[root];
         int level = 0;
@@ -2538,7 +2539,7 @@ struct htm_range htm_tree_s2cpoly_range(const struct htm_tree *tree,
             /* root contains no points */
             continue;
         }
-        _htm_path_root(&path, root);
+        _htm_path_root(&path, static_cast<htm_root>(root));
 
         while (1) {
             uint64_t curcount = htm_varint_decode(s);

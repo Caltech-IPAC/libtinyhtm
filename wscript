@@ -111,11 +111,11 @@ def configure(ctx):
 def build(ctx):
     # C interface
     # static library
-    c_sources=['src/common.c',
-               'src/select.c',
-               'src/geometry.c',
-               'src/htm.c',
-               'src/tree.c']
+    c_sources=['src/common.cxx',
+               'src/select.cxx',
+               'src/geometry.cxx',
+               'src/htm.cxx',
+               'src/tree.cxx']
     ctx.stlib(
         source=c_sources,
         includes='include include/tinyhtm',
@@ -225,7 +225,7 @@ def build(ctx):
 
     # point counting utility
     ctx.program(
-        source='src/tree_count.c',
+        source='src/tree_count.cxx',
         includes='include include/tinyhtm',
         target='htm_tree_count',
         name='htm_tree_count',
@@ -234,7 +234,7 @@ def build(ctx):
     )
     # id listing utility
     ctx.program(
-        source='src/id_list.c',
+        source='src/id_list.cxx',
         includes='include include/tinyhtm',
         target='htm_id_list',
         name='htm_id_list',
@@ -242,12 +242,12 @@ def build(ctx):
         use='M tinyhtm_st'
     )
     # test cases
-    ctx.objects(source='test/rand.c test/cmp.c',
+    ctx.objects(source='test/rand.cxx test/cmp.cxx',
                 includes='include include/tinyhtm',
                 target='testobjs')
     for t in ('htm', 'geometry', 'select'):
         ctx.program(
-            source='test/test_%s.c' % t,
+            source='test/test_%s.cxx' % t,
             includes='include include/tinyhtm',
             target='test/test_' + t,
             install_path=False,
@@ -333,7 +333,7 @@ def test(ctx):
                     '--enable-gcov: skipping code coverage reports!\n')
     else:
         # TODO: this is an egregious hack
-        for s in ('select.c', 'geometry.c', 'htm.c'):
+        for s in ('select.cxx', 'geometry.cxx', 'htm.cxx'):
             ctx(rule='${GCOV} --object-file ${TGT} ${SRC}',
                 source='src/' + s,
                 target='src/' + s + '.1.gcno',
