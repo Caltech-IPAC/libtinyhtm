@@ -152,7 +152,7 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
         NULL, mmap_size, PROT_READ, MAP_SHARED | MAP_NORESERVE,
         tree->datafd, 0);
 
-    tree->entries=data_mmap+tree->offset;
+    tree->entries=static_cast<char*>(data_mmap)+tree->offset;
                                 
     if (data_mmap == MAP_FAILED) {
         err = HTM_EMMAN;
@@ -171,7 +171,7 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
         return HTM_OK;
       }
 
-    tree->index=data_mmap+index_offset;
+    tree->index=static_cast<char*>(data_mmap)+index_offset;
 
     /* parse tree file header */
     s = (const unsigned char *) tree->index;
@@ -213,8 +213,8 @@ void htm_tree_destroy(struct htm_tree *tree)
         return;
     }
     /* unmap and close data file */
-    if (tree->entries-tree->offset != MAP_FAILED) {
-        munmap(tree->entries-tree->offset, tree->datasz);
+    if (static_cast<char*>(tree->entries)-tree->offset != MAP_FAILED) {
+        munmap(static_cast<char*>(tree->entries)-tree->offset, tree->datasz);
         tree->entries = MAP_FAILED;
     }
     tree->datasz = 0;
@@ -267,7 +267,7 @@ int64_t htm_tree_s2circle_scan(const struct htm_tree *tree,
                                const struct htm_v3 *center,
                                double radius,
                                enum htm_errcode *err,
-                               int (*callback)(void*, int, hid_t*, char **))
+                               std::function<int(void*, int, hid_t*, char **)> callback)
 {
     double dist2;
     int64_t count;
@@ -289,10 +289,10 @@ int64_t htm_tree_s2circle_scan(const struct htm_tree *tree,
     count = 0;
     for (i = 0, count = 0; i < tree->count; ++i) {
       if (htm_v3_dist2(center,
-                       (struct htm_v3*)(tree->entries+i*tree->entry_size))
+                       (struct htm_v3*)(static_cast<char*>(tree->entries)+i*tree->entry_size))
           <= dist2) {
-          if(callback==NULL
-             || callback(tree->entries+i*tree->entry_size,
+          if(!callback
+             || callback(static_cast<char*>(tree->entries)+i*tree->entry_size,
                          tree->num_elements_per_entry,tree->element_types,
                          tree->element_names))
             ++count;
@@ -305,7 +305,7 @@ int64_t htm_tree_s2circle_scan(const struct htm_tree *tree,
 int64_t htm_tree_s2ellipse_scan(const struct htm_tree *tree,
                                 const struct htm_s2ellipse *ellipse,
                                 enum htm_errcode *err,
-                                int (*callback)(void*, int, hid_t*, char **))
+                                std::function<int(void*, int, hid_t*, char **)> callback)
 {
     int64_t count;
     uint64_t i;
@@ -318,9 +318,9 @@ int64_t htm_tree_s2ellipse_scan(const struct htm_tree *tree,
     }
     count = 0;
     for (i = 0, count = 0; i < tree->count; ++i) {
-      if (htm_s2ellipse_cv3(ellipse, (struct htm_v3*)(tree->entries+i*tree->entry_size)) != 0) {
-          if(callback==NULL
-             || callback(tree->entries+i*tree->entry_size,
+      if (htm_s2ellipse_cv3(ellipse, (struct htm_v3*)(static_cast<char*>(tree->entries)+i*tree->entry_size)) != 0) {
+          if(!callback
+             || callback(static_cast<char*>(tree->entries)+i*tree->entry_size,
                          tree->num_elements_per_entry,tree->element_types,
                          tree->element_names))
             ++count;
@@ -333,7 +333,7 @@ int64_t htm_tree_s2ellipse_scan(const struct htm_tree *tree,
 int64_t htm_tree_s2cpoly_scan(const struct htm_tree *tree,
                               const struct htm_s2cpoly *poly,
                               enum htm_errcode *err,
-                              int (*callback)(void*, int, hid_t*, char **))
+                              std::function<int(void*, int, hid_t*, char **)> callback)
 {
     int64_t count;
     uint64_t i;
@@ -346,9 +346,9 @@ int64_t htm_tree_s2cpoly_scan(const struct htm_tree *tree,
     }
     count = 0;
     for (i = 0, count = 0; i < tree->count; ++i) {
-      if (htm_s2cpoly_cv3(poly, (struct htm_v3*)(tree->entries+i*tree->entry_size)) != 0) {
-          if(callback==NULL
-             || callback(tree->entries+i*tree->entry_size,
+      if (htm_s2cpoly_cv3(poly, (struct htm_v3*)(static_cast<char*>(tree->entries)+i*tree->entry_size)) != 0) {
+          if(!callback
+             || callback(static_cast<char*>(tree->entries)+i*tree->entry_size,
                          tree->num_elements_per_entry,tree->element_types,
                          tree->element_names))
             ++count;

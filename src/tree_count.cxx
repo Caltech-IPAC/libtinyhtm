@@ -310,15 +310,15 @@ static void test_tree(const char * const datafile,
     }
     for (i = 0; i < tree.count; ++i) {
         int64_t c =
-          htm_tree_s2circle_count(&tree,(struct htm_v3*)(tree.entries
+          htm_tree_s2circle_count(&tree,(struct htm_v3*)(static_cast<char*>(tree.entries)
                                                          + i*tree.entry_size),
                                   r, &ec);
         if (c != 1) {
             err("Circle of radius %g around %llu:(%.18g, %.18g, %.18g) "
                 "contains %lld points (expecting 1).", r, i,
-                ((struct htm_v3*)(tree.entries+i*tree.entry_size))->x,
-                ((struct htm_v3*)(tree.entries+i*tree.entry_size))->y,
-                ((struct htm_v3*)(tree.entries+i*tree.entry_size))->z,
+                ((struct htm_v3*)(static_cast<char*>(tree.entries)+i*tree.entry_size))->x,
+                ((struct htm_v3*)(static_cast<char*>(tree.entries)+i*tree.entry_size))->y,
+                ((struct htm_v3*)(static_cast<char*>(tree.entries)+i*tree.entry_size))->z,
                 (long long) c);
         }
     }
