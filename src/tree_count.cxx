@@ -176,10 +176,8 @@ static void circle_count(const char * const datafile,
         print_range(&range);
     } else {
         int64_t count =
-          htm_tree_s2circle(&tree, &cen, r, &ec,
-                            (print==0 ?
-                             std::function<int(void*, int, hid_t*, char **)>() :
-                             print_entry));
+          htm_tree_s2circle(&tree, &cen, r, &ec,(print==0 ? htm_callback() :
+                                                 print_entry));
         htm_tree_destroy(&tree);
         if (ec != HTM_OK) {
             err("Failed to count points in circle: %s", htm_errmsg(ec));
@@ -228,10 +226,8 @@ static void ellipse_count(const char * const datafile,
         print_range(&range);
     } else {
         int64_t count =
-          htm_tree_s2ellipse(&tree, &ellipse, &ec,
-                             (print==0 ?
-                              std::function<int(void*, int, hid_t*, char **)>() :
-                              print_entry));
+          htm_tree_s2ellipse(&tree, &ellipse, &ec,(print==0 ? htm_callback() :
+                                                   print_entry));
         htm_tree_destroy(&tree);
         if (ec != HTM_OK) {
             err("Failed to count points in ellipse: %s", htm_errmsg(ec));
@@ -290,10 +286,8 @@ static void hull_count(const char * const datafile,
         print_range(&range);
     } else {
         int64_t count =
-          htm_tree_s2cpoly(&tree, poly, &ec,
-                           (print==0 ?
-                            std::function<int(void*, int, hid_t*, char **)>() :
-                            print_entry));
+          htm_tree_s2cpoly(&tree, poly, &ec,(print==0 ? htm_callback() :
+                                             print_entry));
         htm_tree_destroy(&tree);
         free(poly);
         if (ec != HTM_OK) {

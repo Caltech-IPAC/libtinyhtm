@@ -2,8 +2,7 @@
 
 namespace tinyhtm
 {
-  int64_t Query::callback(std::function<int (void *entry, int num_elements,
-                                             hid_t *types, char **names)> fn) const
+  int64_t Query::callback(htm_callback fn) const
   {
     int64_t count;
     enum htm_errcode ec;

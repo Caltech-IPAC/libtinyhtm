@@ -267,7 +267,7 @@ int64_t htm_tree_s2circle_scan(const struct htm_tree *tree,
                                const struct htm_v3 *center,
                                double radius,
                                enum htm_errcode *err,
-                               std::function<int(void*, int, hid_t*, char **)> callback)
+                               htm_callback callback)
 {
     double dist2;
     int64_t count;
@@ -305,7 +305,7 @@ int64_t htm_tree_s2circle_scan(const struct htm_tree *tree,
 int64_t htm_tree_s2ellipse_scan(const struct htm_tree *tree,
                                 const struct htm_s2ellipse *ellipse,
                                 enum htm_errcode *err,
-                                std::function<int(void*, int, hid_t*, char **)> callback)
+                                htm_callback callback)
 {
     int64_t count;
     uint64_t i;
@@ -333,7 +333,7 @@ int64_t htm_tree_s2ellipse_scan(const struct htm_tree *tree,
 int64_t htm_tree_s2cpoly_scan(const struct htm_tree *tree,
                               const struct htm_s2cpoly *poly,
                               enum htm_errcode *err,
-                              std::function<int(void*, int, hid_t*, char **)> callback)
+                              htm_callback callback)
 {
     int64_t count;
     uint64_t i;

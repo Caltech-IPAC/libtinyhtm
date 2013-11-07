@@ -1868,7 +1868,7 @@ int64_t htm_tree_s2circle(const struct htm_tree *tree,
                           const struct htm_v3 *center,
                           double radius,
                           enum htm_errcode *err,
-                          std::function<int(void*, int, hid_t*, char **)> callback)
+                          htm_callback callback)
 {
     struct _htm_path path;
     double d2;
@@ -1955,10 +1955,12 @@ int64_t htm_tree_s2circle(const struct htm_tree *tree,
                 for (i = index; i < index + curcount; ++i) {
                   if (coverage==HTM_INSIDE
                       || htm_v3_dist2(center,(struct htm_v3*)
-                                      (static_cast<char*>(tree->entries)+i*tree->entry_size)) <= d2)
+                                      (static_cast<char*>(tree->entries)
+                                       + i*tree->entry_size)) <= d2)
                     {
                       if(!callback
-                         || callback(static_cast<char*>(tree->entries)+i*tree->entry_size,
+                         || callback(static_cast<char*>(tree->entries)
+                                     + i*tree->entry_size,
                                      tree->num_elements_per_entry,
                                      tree->element_types,
                                      tree->element_names))
@@ -1998,7 +2000,7 @@ ascend:
 int64_t htm_tree_s2ellipse(const struct htm_tree *tree,
                            const struct htm_s2ellipse *ellipse,
                            enum htm_errcode *err,
-                           std::function<int(void*, int, hid_t*, char **)> callback)
+                           htm_callback callback)
 {
     struct _htm_path path;
     int64_t count;
@@ -2076,7 +2078,8 @@ int64_t htm_tree_s2ellipse(const struct htm_tree *tree,
                                            (static_cast<char*>(tree->entries)+i*tree->entry_size)))
                     {
                       if(!callback
-                         || callback(static_cast<char*>(tree->entries)+i*tree->entry_size,
+                         || callback(static_cast<char*>(tree->entries)
+                                     + i*tree->entry_size,
                                      tree->num_elements_per_entry,
                                      tree->element_types, tree->element_names))
                       ++count;
@@ -2116,7 +2119,7 @@ ascend:
 int64_t htm_tree_s2cpoly(const struct htm_tree *tree,
                          const struct htm_s2cpoly *poly,
                          enum htm_errcode *err,
-                         std::function<int(void*, int, hid_t*, char **)> callback)
+                         htm_callback callback)
 {
     double stackab[2*256 + 4];
     struct _htm_path path;
@@ -2206,9 +2209,13 @@ int64_t htm_tree_s2cpoly(const struct htm_tree *tree,
               {
                 uint64_t i;
                 for (i = index; i < index + curcount; ++i) {
-                  if (htm_s2cpoly_cv3(poly, (struct htm_v3*)(static_cast<char*>(tree->entries)+i*tree->entry_size))) {
+                  if (htm_s2cpoly_cv3(poly, (struct htm_v3*)
+                                      (static_cast<char*>(tree->entries)
+                                       + i*tree->entry_size))) {
                     if(!callback
-                       || callback(static_cast<char*>(tree->entries)+i*tree->entry_size, tree->num_elements_per_entry,
+                       || callback(static_cast<char*>(tree->entries)
+                                   + i*tree->entry_size,
+                                   tree->num_elements_per_entry,
                                    tree->element_types, tree->element_names))
                       ++count;
                   }
