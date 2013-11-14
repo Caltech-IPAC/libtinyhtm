@@ -12,7 +12,6 @@
 #include <cassert>
 #include "tree_root.hxx"
 #include "mem_params.hxx"
-#include "tree_entry.hxx"
 #include "now.hxx"
 #include "tree_gen/emit_node.hxx"
 #include "tree_gen/layout_node.hxx"
