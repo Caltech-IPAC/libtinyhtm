@@ -2,7 +2,7 @@
  */
 
 #include <stdexcept>
-#include "tinyhtm/varint.h"
+#include "../../tinyhtm/varint.h"
 #include "hash_table.hxx"
 #include "../blk_writer.hxx"
 

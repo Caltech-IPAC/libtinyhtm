@@ -3,7 +3,7 @@
 
 #include <stdexcept>
 #include "tinyhtm.h"
-#include "tinyhtm/varint.h"
+#include "../../tinyhtm/varint.h"
 #include "hash_table.hxx"
 #include "../blk_writer.hxx"
 #include "../tree_root.hxx"

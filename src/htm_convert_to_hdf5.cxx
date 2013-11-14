@@ -6,7 +6,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 #include "htm_entry.hxx"
-#include "sort_and_index/tree_entry.hxx"
+#include "tree_entry.hxx"
 
 int main(int argc, char *argv[])
 {

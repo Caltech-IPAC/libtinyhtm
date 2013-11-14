@@ -1,7 +1,7 @@
 #ifndef HTM_ENTRY_HXX
 #define HTM_ENTRY_HXX
 
-#include "geometry.h"
+#include "tinyhtm/geometry.h"
 
 template<class T>
 struct htm_entry

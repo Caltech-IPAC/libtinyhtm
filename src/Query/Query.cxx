@@ -1,6 +1,6 @@
 #include <boost/lexical_cast.hpp>
-#include "Query.hxx"
-#include "Spherical.hxx"
+#include "../Query.hxx"
+#include "../Spherical.hxx"
 
 namespace tinyhtm
 {

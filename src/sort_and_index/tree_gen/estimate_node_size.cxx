@@ -1,7 +1,7 @@
 /*  Estimates the compressed on-disk size of a tree node.
  */
 
-#include "tinyhtm/varint.h"
+#include "../../tinyhtm/varint.h"
 #include "../node.hxx"
 
 uint32_t estimate_node_size(const struct mem_node * const node,

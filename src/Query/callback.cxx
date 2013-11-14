@@ -1,4 +1,4 @@
-#include "Query.hxx"
+#include "../Query.hxx"
 
 namespace tinyhtm
 {

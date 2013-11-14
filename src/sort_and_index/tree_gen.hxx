@@ -16,6 +16,7 @@
 #include "now.hxx"
 #include "tree_gen/emit_node.hxx"
 #include "tree_gen/layout_node.hxx"
+#include "tree_gen_context.hxx"
 
 void finish_root(struct tree_root &super,
                  tree_gen_context &ctx);

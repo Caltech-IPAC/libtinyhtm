@@ -204,8 +204,8 @@
 #include <stdexcept>
 #include <sstream>
 
+#include "../tree_entry.hxx"
 #include "../sort_and_index/mem_params.hxx"
-#include "../sort_and_index/tree_entry.hxx"
 #include "../sort_and_index/tree_root.hxx"
 #include "../sort_and_index/node.hxx"
 #include "../sort_and_index.hxx"

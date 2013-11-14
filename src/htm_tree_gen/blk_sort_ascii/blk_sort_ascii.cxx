@@ -20,7 +20,7 @@
 #include <sstream>
 #include "../../sort_and_index/blk_writer.hxx"
 #include "../../sort_and_index/mem_params.hxx"
-#include "../../sort_and_index/tree_entry.hxx"
+#include "../../tree_entry.hxx"
 #include "../../sort_and_index/now.hxx"
 
 char * eat_delim(char *s, char delim, const std::string &fname, size_t lineno);
