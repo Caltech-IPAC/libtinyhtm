@@ -3,6 +3,8 @@
 
 #include "tinyhtm/geometry.h"
 
+// working copy - pmm
+
 template<class T>
 struct htm_entry
 {

@@ -1,6 +1,8 @@
 #ifndef SORT_AND_INDEX_SPHERICAL_TO_VEC_H
 #define SORT_AND_INDEX_SPHERICAL_TO_VEC_H
 
+// working copy - pmm
+
 /* ================================================================ */
 /*        Phase 4: Convert spherical coords to unit vectors         */
 /* ================================================================ */
