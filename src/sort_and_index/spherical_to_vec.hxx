@@ -43,13 +43,24 @@ void spherical_to_vec(const std::string &datafile,
       H5::H5File file(scratchfile, H5F_ACC_TRUNC);
       H5::CompType compound(sizeof(htm_entry<T>));
     
-      compound.insertMember("x", 0, H5::PredType::NATIVE_DOUBLE);
-      compound.insertMember("y", 8, H5::PredType::NATIVE_DOUBLE);
-      compound.insertMember("z", 16, H5::PredType::NATIVE_DOUBLE);
-      const size_t num_data_elements(sizeof(T)/8-3);
+//      compound.insertMember("x", 0, H5::PredType::NATIVE_DOUBLE);
+//      compound.insertMember("y", 8, H5::PredType::NATIVE_DOUBLE);
+//      compound.insertMember("z", 16, H5::PredType::NATIVE_DOUBLE);
+//
+//      const size_t num_data_elements(sizeof(T)/8-3);
+      const size_t num_data_elements(sizeof(T::names)/sizeof(T::names[0]));
+std::cout << "num_data_elements = " << num_data_elements << "\n";
+
+      int offset = HOFFSET(htm_entry<T>, data);
+
       for(size_t i=0; i<num_data_elements; ++i)
-        compound.insertMember(T::names[i], HOFFSET(htm_entry<T>, data) + 8*i,
+      {
+std::cout << i << " offset " << offset << " " << T::names[i] << "\n";
+
+        compound.insertMember(T::names[i], HOFFSET(htm_entry<T>, data) + offset,
                               T::types[i]);
+        offset += T::types[i].getSize();
+      }
 
       H5::DataSet dataset(file.createDataSet("data",compound,file_space));
 
@@ -66,10 +77,15 @@ void spherical_to_vec(const std::string &datafile,
                       n*sizeof(T));
           for (size_t i=0; i<n; ++i)
             {
-              htm_sc_tov3(&htm_data[i].v, &ra_dec[i].sc);
-              for(size_t j=0; j<num_data_elements; ++j)
+              htm_v3 v;
+              htm_sc_tov3(&v, &ra_dec[i].sc);
+              htm_data[i].data[0] = v.x;
+              htm_data[i].data[1] = v.y;
+              htm_data[i].data[2] = v.z;
+  
+              for(size_t j=0; j<num_data_elements-3; ++j)
                 {
-                  htm_data[i].data[j].i=ra_dec[i].data(j);
+                  htm_data[i].data[j+3]=ra_dec[i].data(j);
                 }
             }
 
