@@ -55,14 +55,6 @@ std::cout << "data_size = " << data_size << "\n";
       H5::H5File file(scratchfile, H5F_ACC_TRUNC);
       H5::CompType compound(data_size);
     
-//      compound.insertMember("x", 0, H5::PredType::NATIVE_DOUBLE);
-//      compound.insertMember("y", 8, H5::PredType::NATIVE_DOUBLE);
-//      compound.insertMember("z", 16, H5::PredType::NATIVE_DOUBLE);
-//
-//      const size_t num_data_elements(sizeof(T)/8-3);
-//
-//      int offset = HOFFSET(htm_entry<T>, data);
-
       int offset = 0;
       for(size_t i=0; i<num_data_elements; ++i)
       {
@@ -94,6 +86,10 @@ std::cout << i << " offset " << offset << " " << T::names[i] << "\n";
 
               for(size_t j=0; j<sizeof(T)-sizeof(struct htm_v3); ++j)
                 {
+ // causes more problems..
+ // htm_data[i].data[j] = reinterpret_cast<char *>(ra_dec[i].data(j));
+ //
+ // issues with data formats/values in output file..
                   htm_data[i].data[j] = ra_dec[i].data(j);
                 }
               }
