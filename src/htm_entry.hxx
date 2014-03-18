@@ -8,7 +8,8 @@
 template<class T>
 struct htm_entry
 {
-    char data[sizeof(T)];
+    htm_v3 v;
+    char data[sizeof(T)-24];
 } HTM_ALIGNED(16);
 
 #endif
