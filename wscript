@@ -193,8 +193,8 @@ def build(ctx):
         target='htm_tree_gen',
         name='htm_tree_gen',
         install_path=ctx.env.BINDIR,
-        use='M PTHREAD tinyhtm_st tinyhtmcxx_st hdf5_cxx boost'
-    )
+       use='M PTHREAD tinyhtm_st tinyhtmcxx_st hdf5_cxx boost'
+   )
     # Convert old format to hdf5
     ctx.program(
         source=['src/htm_convert_to_hdf5.cxx',

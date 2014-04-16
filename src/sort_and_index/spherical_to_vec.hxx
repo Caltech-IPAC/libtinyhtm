@@ -43,54 +43,89 @@ void spherical_to_vec(const std::string &datafile,
       H5::DataSpace file_space(1,dim);
 
       const size_t num_data_elements(sizeof(T::names)/sizeof(T::names[0]));
-std::cout << "num_data_elements = " << num_data_elements << "\n";
       size_t data_size = 0; 
-      for(size_t i=0; i<num_data_elements; ++i) data_size += T::types[i].getSize();
+      int data_offset[num_data_elements];
+      int data_sz[num_data_elements];
+      data_offset[0] = 0;
 
+      union {
+          int8_t t8int;
+          float tfloat;
+          double tdouble;
+      } tval;
+
+      for(size_t i=0; i<num_data_elements; ++i) {
+          data_sz[i] = T::types[i].getSize();
+          if (i < num_data_elements-1) {
+              data_offset[i+1] = data_offset[i] + data_sz[i];
+           }
+      }
+      data_size = data_offset[num_data_elements-1] + T::types[num_data_elements-1].getSize();
 // round data_size up to nearest multiple of 16
-      if ((data_size % 16) != 0) 
-          data_size = ((data_size/16) + 1)*16;
-std::cout << "data_size = " << data_size << "\n"; 
+      if ((data_size % 16) != 0) data_size = ((data_size/16) + 1)*16;
 
       H5::H5File file(scratchfile, H5F_ACC_TRUNC);
       H5::CompType compound(data_size);
     
-      int offset = 0;
       for(size_t i=0; i<num_data_elements; ++i)
       {
-std::cout << i << " offset " << offset << " " << T::names[i] << "\n";
-        compound.insertMember(T::names[i], offset, T::types[i]);
-        offset += T::types[i].getSize();
+        compound.insertMember(T::names[i], data_offset[i], T::types[i]);
       }
 
       H5::DataSet dataset(file.createDataSet("data",compound,file_space));
-
       std::vector<T> ra_dec(std::min(npoints,mem.memsz/sizeof(T)));
       std::vector<htm_entry<T> > htm_data(std::min(npoints,mem.memsz/sizeof(htm_entry<T>)));
-
       std::ifstream infile(datafile.c_str());
       hsize_t current(0);
+
+      int64_t tmpval;
+
       while(current<npoints)
         {
           hsize_t n(std::min(static_cast<size_t>(npoints-current),
-                             mem.memsz/sizeof(htm_entry<T>)));
-          infile.read(reinterpret_cast<char *>(ra_dec.data()),
-                      n*sizeof(T));
-          for (size_t i=0; i<n; ++i)
+                             mem.memsz/sizeof(T)));
+//                             mem.memsz/sizeof(htm_entry<T>)));
+
+          infile.read(reinterpret_cast<char *>(ra_dec.data()), n*sizeof(T));
+          for (size_t i=0; i<infile.gcount()/sizeof(T); ++i)
             {
+/*
               htm_v3 v;
               htm_sc_tov3(&v, &ra_dec[i].sc);
               htm_data[i].v.x = v.x;
               htm_data[i].v.y = v.y;
               htm_data[i].v.z = v.z;
+*/
 
-              for(size_t j=0; j<sizeof(T)-sizeof(struct htm_v3); ++j)
+/*
+if (current == 0 && i < 5) {
+    std::cout << ra_dec[i].x << " " << ra_dec[i].y << " " << ra_dec[i].z;
+    std::cout << " " << ra_dec[i].mjd << " " << ra_dec[i].tsky << ra_dec[i].sso << "\n";
+}
+*/
+     
+	for(size_t j=0; j<num_data_elements; ++j)
                 {
- // causes more problems..
- // htm_data[i].data[j] = reinterpret_cast<char *>(ra_dec[i].data(j));
- //
- // issues with data formats/values in output file..
-                  htm_data[i].data[j] = ra_dec[i].data(j);
+                   tmpval = ra_dec[i].data(j);
+
+                   if (data_sz[j] == 1) {
+                       tval.t8int = reinterpret_cast<int8_t &>(tmpval);
+if (current == 0 && i < 2) std::cout << data_sz[j] << " " << data_offset[j] << " " << tval.t8int << "\n";
+                   }
+                   else if (data_sz[j] == 4) {
+                       tval.tfloat = reinterpret_cast<float &>(tmpval);
+if (current == 0 && i < 2) std::cout << data_sz[j] << " " << data_offset[j] << " " << tval.tfloat << "\n";
+                   }
+                   else if (data_sz[j] == 8) {
+                       tval.tdouble = reinterpret_cast<double &>(tmpval);
+if (current == 0 && i < 2) std::cout << data_sz[j] << " " << data_offset[j] << " " << tval.tdouble << "\n";
+                   }
+
+//
+// way to this via reinterpret_cast - given that need to multiple elements of data[]??
+//
+                   memcpy(&(htm_data[i].data[data_offset[j]]), &tval, data_sz[j]);
+
                 }
               }
 
