@@ -67,6 +67,7 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
       hid_t htm_dataset, index_dataset;
       hid_t htm_type;
       size_t i;
+      hid_t group;
 
       h5data = H5Fopen(datafile, H5F_ACC_RDONLY,
                        H5P_DEFAULT);
@@ -74,9 +75,8 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
         return HTM_EIO;
       }
 
-
-printf("open dset htm\n");
-      htm_dataset=H5Dopen(h5data,"htm", H5P_DEFAULT);
+printf("open data\n");
+      htm_dataset=H5Dopen(h5data, "data", H5P_DEFAULT);
       if (htm_dataset < 0 ) {
         H5Fclose(h5data);
         return HTM_EIO;
