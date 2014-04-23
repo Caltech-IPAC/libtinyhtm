@@ -75,11 +75,14 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
         return HTM_EIO;
       }
 
-printf("open data\n");
+printf("open data or htm\n");
       htm_dataset=H5Dopen(h5data, "data", H5P_DEFAULT);
       if (htm_dataset < 0 ) {
-        H5Fclose(h5data);
-        return HTM_EIO;
+        htm_dataset=H5Dopen(h5data, "htm", H5P_DEFAULT);
+        if (htm_dataset < 0) {
+            H5Fclose(h5data);
+            return HTM_EIO;
+        }    
       }
       tree->offset=H5Dget_offset(htm_dataset);
       tree->datasz = H5Dget_storage_size(htm_dataset);
