@@ -8,7 +8,6 @@ namespace tinyhtm
     enum htm_errcode ec;
     if(type==Type::circle) {
       count=htm_tree_s2circle(&(tree.tree), &(center.v3), r, &ec, fn);
-      std::cout <<  r << " count " << count << "\n";
     }
     else if(type==Type::ellipse)
       count=htm_tree_s2ellipse(&(tree.tree), &(ellipse.ellipse), &ec, fn);
