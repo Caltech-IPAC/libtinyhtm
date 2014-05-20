@@ -75,10 +75,6 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
         return HTM_EIO;
       }
 
-<<<<<<< HEAD
-=======
-//printf("open data or htm\n");
->>>>>>> 70421ac894f4508fc0ccb820b7336f0eddee03fc
       htm_dataset=H5Dopen(h5data, "data", H5P_DEFAULT);
       if (htm_dataset < 0 ) {
         htm_dataset=H5Dopen(h5data, "htm", H5P_DEFAULT);
