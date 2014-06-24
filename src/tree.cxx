@@ -75,7 +75,6 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
         return HTM_EIO;
       }
 
-//printf("open data or htm\n");
       htm_dataset=H5Dopen(h5data, "data", H5P_DEFAULT);
       if (htm_dataset < 0 ) {
         htm_dataset=H5Dopen(h5data, "htm", H5P_DEFAULT);
@@ -117,7 +116,6 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
 
       /* memory map the index (if there is one) */
 
-//printf("open htm_index\n");
       index_dataset=H5Dopen(h5data,"htm_index", H5P_DEFAULT);
       if (index_dataset < 0 ) {
         H5Fclose(h5data);
