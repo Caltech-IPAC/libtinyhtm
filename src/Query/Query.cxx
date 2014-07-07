@@ -78,6 +78,39 @@ namespace tinyhtm
         if(poly==nullptr || ec!=HTM_OK)
           throw Exception("Can not allocate polygon");
       }
+    else if(query_shape=="box")
+      {
+        type=tinyhtm::Query::Type::polygon;
+        if(vertices.size()!=4)
+          {
+            std::stringstream ss;
+            ss << "Wrong number of arguments for box.  Need 4 but have "
+               << vertices.size()
+               << ": " << vertex_string << "\n"
+               << vertices[0] << "\n"
+               << vertices[1] << "\n"
+               << vertices[2] << "\n"
+               << vertices[3] << "\n";
+            throw Exception(ss.str());
+          }
+        htm_sc sc;
+        htm_v3 cen;
+        enum htm_errcode ec;
+        ec=htm_sc_init(&sc,vertices[0],vertices[1]);
+        ec = htm_sc_tov3(&cen, &sc);
+        poly = htm_s2cpoly_box(&cen, vertices[2], vertices[3], 0, &ec);
+        for(size_t j=0;j<poly->n;j++)
+          {
+            // FIXME:
+            // The following lines are used for testing. Remove it late. 
+            // 
+            //htm_v3_tosc(&sc,&(poly->ve[j]));
+            //std::cout <<" Query:: lon=" << j << " " << sc.lon ;
+            //std::cout <<" lat=" << j << " " << sc.lat << std::endl;
+
+            verts.push_back(poly->ve[j]);
+          }
+      }
     else
       throw Exception(std::string("Bad query shape: ") + query_shape);
   }
