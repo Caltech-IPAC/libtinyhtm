@@ -67,7 +67,6 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
       hid_t htm_dataset, index_dataset;
       hid_t htm_type;
       size_t i;
-      hid_t group;
 
       h5data = H5Fopen(datafile, H5F_ACC_RDONLY,
                        H5P_DEFAULT);

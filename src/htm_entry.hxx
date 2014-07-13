@@ -3,13 +3,11 @@
 
 #include "tinyhtm/geometry.h"
 
-// working copy - pmm
-
-template<class T>
+template<typename T>
 struct htm_entry
 {
-    htm_v3 v;
-    char data[sizeof(T)-24];
+  typename T::vector_type x,y,z;
+  char data[T::data_size];
 } HTM_ALIGNED(16);
 
 #endif
