@@ -100,16 +100,7 @@ namespace tinyhtm
         ec = htm_sc_tov3(&cen, &sc);
         poly = htm_s2cpoly_box(&cen, vertices[2], vertices[3], 0, &ec);
         for(size_t j=0;j<poly->n;j++)
-          {
-            // FIXME:
-            // The following lines are used for testing. Remove it late. 
-            // 
-            //htm_v3_tosc(&sc,&(poly->ve[j]));
-            //std::cout <<" Query:: lon=" << j << " " << sc.lon ;
-            //std::cout <<" lat=" << j << " " << sc.lat << std::endl;
-
-            verts.push_back(poly->ve[j]);
-          }
+          verts.push_back(poly->ve[j]);
       }
     else
       throw Exception(std::string("Bad query shape: ") + query_shape);
