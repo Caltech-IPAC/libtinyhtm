@@ -2,7 +2,7 @@
 
 namespace tinyhtm
 {
-  int64_t Query::callback(htm_callback fn) const
+  int64_t Query::search(htm_callback fn) const
   {
     int64_t count;
     enum htm_errcode ec;
