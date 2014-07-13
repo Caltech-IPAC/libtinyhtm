@@ -139,7 +139,7 @@ def build(ctx):
         ['src/Cartesian.cxx',
          'src/Spherical.cxx',
          'src/Query/Query.cxx',
-         'src/Query/callback.cxx',
+         'src/Query/search.cxx',
          'src/Query/count.cxx',
          'src/Query/range.cxx',
          'src/sort_and_index/tree_compress/tree_compress.cxx',
