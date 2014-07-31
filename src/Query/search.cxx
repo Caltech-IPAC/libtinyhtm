@@ -16,7 +16,7 @@ namespace tinyhtm
       }
     else if(type==Type::polygon)
       {
-        count=htm_tree_s2cpoly(&(tree.tree), poly, &ec, fn);
+        count=htm_tree_s2cpoly(&(tree.tree), poly.get(), &ec, fn);
       }
     else
       throw Exception("Bad tinyhtm::Query::Type");

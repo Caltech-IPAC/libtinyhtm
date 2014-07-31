@@ -11,7 +11,7 @@ namespace tinyhtm
     else if(type==Type::ellipse)
       count=htm_tree_s2ellipse_count(&(tree.tree), &(ellipse.ellipse), &ec);
     else if(type==Type::polygon)
-      count=htm_tree_s2cpoly_count(&(tree.tree), poly, &ec);
+      count=htm_tree_s2cpoly_count(&(tree.tree), poly.get(), &ec);
     else
       throw Exception("Bad tinyhtm::Query::Type");
     return count;

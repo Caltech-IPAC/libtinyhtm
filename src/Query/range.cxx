@@ -11,7 +11,7 @@ namespace tinyhtm
     else if(type==Type::ellipse)
       range=htm_tree_s2ellipse_range(&(tree.tree), &(ellipse.ellipse), &ec);
     else if(type==Type::polygon)
-      range=htm_tree_s2cpoly_range(&(tree.tree), poly, &ec);
+      range=htm_tree_s2cpoly_range(&(tree.tree), poly.get(), &ec);
     else
       throw Exception("Bad tinyhtm::Query::Type");
     return std::make_pair(range.min,range.max);
