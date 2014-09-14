@@ -66,7 +66,9 @@ struct blk_writer
       }
     mem = std::calloc(1,memsz);
     if (mem == NULL)
-      throw std::runtime_error("write buffer allocation calloc() failed");
+      throw std::runtime_error("write buffer allocation calloc() failed when "
+                               "allocating " + std::to_string(memsz)
+                               + " bytes.");
     buf = (unsigned char *) mem;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
