@@ -60,63 +60,37 @@ enum htm_errcode htm_v3_ne(struct htm_v3 *north,
 static const double HTM_NAN = 0.0 / 0.0;
 static const double HTM_RMAX = 90.0 - 0.001/3600.0;
 
-//  enum htm_errcode htm_v3_tanrot( double              *angle,
-//                                  const struct htm_v3 *v1,
-//                                  const struct htm_v3 *v2,
-//                                  double               r      )
-//      {
-//      double a, s;
-//      if (angle == NULL || v1 == NULL || v2 == NULL) {
-//          return HTM_ENULLPTR;
-//      }
-//      if (r <= 0.0) {
-//          return HTM_EANG;
-//      }
-//      a = htm_v3_angsep(v1, v2);
-//      if (a == 0.0) {
-//          return HTM_EDEGEN;
-//      }
-//      if (a + 2.0*r > 2.0*HTM_RMAX) {
-//          return HTM_EANG;
-//      }
-//      r *= HTM_RAD_PER_DEG;
-//      a *= HTM_RAD_PER_DEG;
-//      s = 2.0 * sin(r) * sin(0.5*a) / sin(a);
-//      if (s >= 1.0) {
-//          *angle = 90.0;
-//      } else {
-//          *angle = asin(s) * HTM_DEG_PER_RAD;
-//      }
-//      return HTM_OK;
-//  }
+enum htm_errcode htm_v3_tanrot(double *angle,
+                               const struct htm_v3 *v1,
+                               const struct htm_v3 *v2,
+                               double r)
+{
+    double a, s;
+    if (angle == NULL || v1 == NULL || v2 == NULL) {
+        return HTM_ENULLPTR;
+    }
+    if (r <= 0.0) {
+        return HTM_EANG;
+    }
 
-enum htm_errcode htm_v3_tanrot( double              *angle,
-                                const struct htm_v3 *v1,
-                                const struct htm_v3 *v2,
-                                double               r      )
-    {
-    double a;
-    double s;
-	 
-    if ( NULL == angle )             return HTM_ENULLPTR;
-    if ( NULL == v1    )             return HTM_ENULLPTR;
-    if ( NULL == v2    )             return HTM_ENULLPTR;
-	 
-    if ( 0.0  == r     )             return HTM_EANG;
-	 
-    a       = htm_v3_angsep(v1, v2);
-	 
-    if ( 0.0          == a         ) return HTM_EDEGEN;
-    if ( 2.0*HTM_RMAX <  a + 2.0*r ) return HTM_EANG;
-	 
-    r      *= HTM_RAD_PER_DEG;
-    a      *= HTM_RAD_PER_DEG;
-    s       = 2.0 * sin(r) * sin(0.5*a) / sin(a);
-   *angle   = atan(s) * HTM_DEG_PER_RAD;
-	 
+
+    a = htm_v3_angsep(v1, v2);
+    if (a == 0.0) {
+        return HTM_EDEGEN;
+    }
+    if (a + 2.0*r > 2.0*HTM_RMAX) {
+        return HTM_EANG;
+    }
+    r *= HTM_RAD_PER_DEG;
+    a *= HTM_RAD_PER_DEG;
+    s = 2.0 * sin(r) * sin(0.5*a) / sin(a);
+    if (s >= 1.0) {
+        *angle = 90.0;
+    } else {
+        *angle = asin(s) * HTM_DEG_PER_RAD;
+    }
     return HTM_OK;
 }
-
 
 enum htm_errcode htm_v3_rot(struct htm_v3 *out,
                             const struct htm_v3 *v,
