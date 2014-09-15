@@ -4,6 +4,8 @@
     \authors    Serge Monkewitz
     \copyright  IPAC/Caltech
   */
+#include <stdexcept>
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -114,7 +116,9 @@ static void print_range(const struct htm_range *range)
     }
 }
 
-int print_entry(void *entry, int num_elements, hid_t *types, char **names)
+int print_entry(void *entry, int num_elements,
+                const std::vector<H5::DataType> &types,
+                const std::vector<std::string> &names)
 {
   int j;
   static int print_header=1;
@@ -122,22 +126,23 @@ int print_entry(void *entry, int num_elements, hid_t *types, char **names)
   if(print_header)
     {
       for(j=0; j<num_elements; ++j)
-        printf("%s\t",names[j]);
+        printf("%s\t",names[j].c_str());
       printf("\n");
       print_header=0;
     }
   for(j=0; j<num_elements; ++j)
     {
-      switch (types[j])
+      if(types[j]==H5::PredType::NATIVE_INT)
         {
-        case H5T_INTEGER:
           printf(" %ld",*((int64_t *)(entry)+j));
-          break;
-        case H5T_FLOAT:
+        }
+      else if(types[j]==H5::PredType::NATIVE_FLOAT)
+        {
           printf(" %lf",*((double *)(entry)+j));
-          break;
-        default:
-          abort();
+        }
+      else
+        {
+          throw std::runtime_error("Unknown DataType: " + types[j].fromClass());
         }
     }
   printf("\n");

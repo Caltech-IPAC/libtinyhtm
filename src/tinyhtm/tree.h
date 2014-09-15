@@ -8,8 +8,12 @@
 #define HTM_TREE_H
 
 #include <functional>
+#include <vector>
+#include <string>
+
+#include <H5Cpp.h>
+
 #include "geometry.h"
-#include <hdf5.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,8 +36,8 @@ struct htm_tree {
     const unsigned char *root[8];           /**< Pointers to HTM root nodes. */
     size_t entry_size;/**< Size of each entry. */
     size_t num_elements_per_entry;
-    char **element_names;
-    hid_t *element_types;
+    std::vector<std::string> element_names;
+    std::vector<H5::DataType> element_types;
     void *entries;  /**< Data file memory map. */
     const void *index;      /**< Tree file memory map. */
     size_t indexsz;         /**< Size of tree file memory-map (bytes). */
@@ -59,7 +63,7 @@ void htm_tree_destroy(struct htm_tree *tree);
 enum htm_errcode htm_tree_lock(struct htm_tree *tree, size_t datathresh);
 
 
-typedef std::function<bool(void*, int, hid_t*, char **)> htm_callback;
+typedef std::function<bool(void*, int, const std::vector<H5::DataType> &, const std::vector<std::string> &)> htm_callback;
 
 /* ================================================================ */
 /** @}

@@ -121,7 +121,7 @@ def build(ctx):
         target='tinyhtm',
         name='tinyhtm_st',
         install_path=ctx.env.LIBDIR,
-        use='M hdf5'
+        use='M hdf5 hdf5_cxx'
     )
     # shared library (required by cgo)
     ctx.shlib(
@@ -130,7 +130,7 @@ def build(ctx):
         target='tinyhtm',
         name='tinyhtm_sh',
         install_path=ctx.env.LIBDIR,
-        use='M hdf5'
+        use='M hdf5 hdf5_cxx'
     )
 
     # C++ interface
@@ -168,7 +168,7 @@ def build(ctx):
         target='tinyhtmcxx',
         name='tinyhtmcxx_st',
         install_path=ctx.env.LIBDIR,
-        use='M hdf5 tinyhtm boost'
+        use='M hdf5 hdf5_cxx tinyhtm boost'
     )
     # shared library
     ctx.shlib(
@@ -177,7 +177,7 @@ def build(ctx):
         target='tinyhtmcxx',
         name='tinyhtmcxx_sh',
         install_path=ctx.env.LIBDIR,
-        use='M hdf5 tinyhtm boost'
+        use='M hdf5 hdf5_cxx tinyhtm boost'
     )
 
     # tree index generator
@@ -213,7 +213,7 @@ def build(ctx):
         target='htm_tree_count',
         name='htm_tree_count',
         install_path=ctx.env.BINDIR,
-        use='M tinyhtm_st'
+        use='M tinyhtm_st hdf5_cxx'
     )
     # id listing utility
     ctx.program(

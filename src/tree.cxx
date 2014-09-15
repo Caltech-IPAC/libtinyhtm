@@ -2,7 +2,7 @@
     \brief      HTM tree index implementation.
 
     For API documentation, see tree.h.
-
+e
     \authors    Serge Monkewitz
     \copyright  IPAC/Caltech
   */
@@ -47,8 +47,6 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
     tree->indexsz = 0;
     tree->datasz = 0;
     tree->datafd = -1;
-    tree->element_types=NULL;
-    tree->element_names=NULL;
 
     index_offset=0;
 
@@ -62,74 +60,52 @@ enum htm_errcode htm_tree_init(struct htm_tree *tree,
 
     /* Open with hdf5 commands just to get the size and offsets.  Then
        mmap with raw calls */
-    {
-      hid_t h5data;
-      hid_t htm_dataset, index_dataset;
-      hid_t htm_type;
-      size_t i;
+    try
+      {
+        H5::H5File hdf_file (datafile, H5F_ACC_RDONLY);
+        H5::DataSet dataset = hdf_file.openDataSet ("data");
+        tree->offset = dataset.getOffset();
+        tree->datasz = dataset.getStorageSize();
+        auto htm_type = dataset.getCompType();
+        tree->entry_size=htm_type.getSize();
+        tree->num_elements_per_entry=htm_type.getNmembers();
 
-      h5data = H5Fopen(datafile, H5F_ACC_RDONLY,
-                       H5P_DEFAULT);
-      if (h5data < 0 ) {
+        try
+          {
+            tree->element_types.reserve(tree->num_elements_per_entry);
+            tree->element_names.reserve(tree->num_elements_per_entry);
+            for(size_t i=0; i<tree->num_elements_per_entry; ++i)
+              {
+                tree->element_types.push_back(htm_type.getMemberDataType(i));
+                tree->element_names.push_back(htm_type.getMemberName(i));
+              }
+          }
+        catch (std::exception &e)
+          {
+            return HTM_ENOMEM;
+          }
+
+        /* memory map the index (if there is one) */
+
+        try
+          {
+            auto index_dataset=hdf_file.openDataSet("htm_index");
+            index_offset=index_dataset.getOffset();
+            tree->indexsz = index_dataset.getStorageSize();
+            if (tree->indexsz % pagesz != 0)
+              tree->indexsz += pagesz - tree->indexsz % pagesz;
+          }
+        catch (H5::Exception &e)
+          {
+            /// Ignore any errors from trying to open a non-existant
+            /// dataset.
+          }
+      }
+    catch (H5::Exception &e)
+      {
         return HTM_EIO;
       }
 
-      htm_dataset=H5Dopen(h5data, "data", H5P_DEFAULT);
-      if (htm_dataset < 0 ) {
-        htm_dataset=H5Dopen(h5data, "htm", H5P_DEFAULT);
-        if (htm_dataset < 0) {
-            H5Fclose(h5data);
-            return HTM_EIO;
-        }    
-      }
-      tree->offset=H5Dget_offset(htm_dataset);
-      tree->datasz = H5Dget_storage_size(htm_dataset);
-      htm_type=H5Dget_type(htm_dataset);
-      tree->entry_size=H5Tget_size(htm_type);
-
-      tree->num_elements_per_entry=H5Tget_nmembers(htm_type);
-      tree->element_types=
-        static_cast<hid_t*>(malloc(sizeof(H5T_class_t)
-                                   *tree->num_elements_per_entry));
-      if(tree->element_types==NULL)
-        {
-          H5Dclose(htm_dataset);
-          H5Fclose(h5data);
-          return HTM_ENOMEM;
-        }
-      tree->element_names=
-        static_cast<char**>(malloc(sizeof(char*)*tree->num_elements_per_entry));
-      if(tree->element_names==NULL)
-        {
-          H5Dclose(htm_dataset);
-          H5Fclose(h5data);
-          return HTM_ENOMEM;
-        }
-      for(i=0; i<tree->num_elements_per_entry; ++i)
-        {
-          tree->element_types[i]=H5Tget_member_class(htm_type,i);
-          tree->element_names[i]=H5Tget_member_name(htm_type,i);
-        }
-
-      H5Dclose(htm_dataset);
-
-      /* memory map the index (if there is one) */
-
-      index_dataset=H5Dopen(h5data,"htm_index", H5P_DEFAULT);
-      if (index_dataset < 0 ) {
-        H5Fclose(h5data);
-      } else {
-        index_offset = H5Dget_offset(index_dataset);
-        tree->indexsz = H5Dget_storage_size(index_dataset);
-
-        if (tree->indexsz % pagesz != 0) {
-          tree->indexsz += pagesz - tree->indexsz % pagesz;
-        }
-        H5Dclose(index_dataset);
-      }
-
-      H5Fclose(h5data);
-    }
 
      tree->datafd = open(datafile, O_RDONLY);
      if (tree->datafd == -1) {
@@ -227,16 +203,16 @@ void htm_tree_destroy(struct htm_tree *tree)
     }
     tree->index = (const void *) MAP_FAILED;
     tree->indexsz = 0;
-    /* Deallocate names and types */
-    if(tree->element_names!=NULL)
-      {
-        for(i=0; i<tree->num_elements_per_entry; ++i)
-          if(tree->element_names[i]!=NULL)
-            free(tree->element_names[i]);
-        free(tree->element_names);
-      }
-    if(tree->element_types!=NULL)
-      free(tree->element_types);
+    // /* Deallocate names and types */
+    // if(tree->element_names!=NULL)
+    //   {
+    //     for(i=0; i<tree->num_elements_per_entry; ++i)
+    //       if(tree->element_names[i]!=NULL)
+    //         free(tree->element_names[i]);
+    //     free(tree->element_names);
+    //   }
+    // if(tree->element_types!=NULL)
+    //   free(tree->element_types);
 
     /* set remaining fields to default values */
     tree->leafthresh = 0;
