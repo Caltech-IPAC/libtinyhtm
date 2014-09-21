@@ -21,6 +21,10 @@ namespace tinyhtm
     else
       throw Exception("Bad tinyhtm::Query::Type");
 
+    if(ec!=HTM_OK)
+      throw Exception("Corrupted index file");
+      
+
     return count;
   }
 }

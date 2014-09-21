@@ -1,3 +1,5 @@
+#pragma once
+
 #include "htm.hxx"
 
 /*  Returns the HTM root triangle for a point.

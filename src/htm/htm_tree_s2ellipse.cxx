@@ -5,13 +5,13 @@
 
 #include "_htm_s2ellipse_htmcov.hxx"
 #include "_htm_subdivide.hxx"
+#include "htm/htm_s2ellipse_cv3_template.hxx"
 
-extern "C" {
-
-int64_t htm_tree_s2ellipse(const struct htm_tree *tree,
-                           const struct htm_s2ellipse *ellipse,
-                           enum htm_errcode *err,
-                           htm_callback callback)
+template <typename T>
+int64_t htm_tree_s2ellipse_template(const struct htm_tree *tree,
+                                    const struct htm_s2ellipse *ellipse,
+                                    enum htm_errcode *err,
+                                    htm_callback callback)
 {
     struct _htm_path path;
     int64_t count;
@@ -85,7 +85,7 @@ int64_t htm_tree_s2ellipse(const struct htm_tree *tree,
                 uint64_t i;
                 for (i = index; i < index + curcount; ++i) {
                   if (coverage==HTM_INSIDE
-                      || htm_s2ellipse_cv3(ellipse, (struct htm_v3*)
+                      || htm_s2ellipse_cv3_template(ellipse, reinterpret_cast<T*>
                                            (static_cast<char*>(tree->entries)+i*tree->entry_size)))
                     {
                       if(!callback
@@ -124,6 +124,31 @@ ascend:
         *err = HTM_OK;
     }
     return count;
+}
+
+extern "C" {
+int64_t htm_tree_s2ellipse(const struct htm_tree *tree,
+                           const struct htm_s2ellipse *ellipse,
+                           enum htm_errcode *err,
+                           htm_callback callback)
+{
+  if(tree->element_types.at(0)==H5::PredType::NATIVE_DOUBLE)
+    {
+      htm_tree_s2ellipse_template<double>(tree,ellipse,err,callback);
+    }
+  else if(tree->element_types.at(0)==H5::PredType::NATIVE_FLOAT)
+    {
+      htm_tree_s2ellipse_template<float>(tree,ellipse,err,callback);
+    }
+  else
+    {
+      if(err!=nullptr)
+        {
+          *err=HTM_ETREE;
+        }
+      return -1;
+    }
+  return 0;
 }
 
 }

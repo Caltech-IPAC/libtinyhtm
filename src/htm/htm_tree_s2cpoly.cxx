@@ -6,14 +6,15 @@
 #include "htm.hxx"
 #include "_htm_s2cpoly_htmcov.hxx"
 #include "_htm_subdivide.hxx"
+#include "htm/htm_s2cpoly_cv3_template.hxx"
 
-extern "C" {
-
-int64_t htm_tree_s2cpoly(const struct htm_tree *tree,
-                         const struct htm_s2cpoly *poly,
-                         enum htm_errcode *err,
-                         htm_callback callback)
+template <typename T>
+int64_t htm_tree_s2cpoly_template(const struct htm_tree *tree,
+                                  const struct htm_s2cpoly *poly,
+                                  enum htm_errcode *err,
+                                  htm_callback callback)
 {
+
     double stackab[2*256 + 4];
     struct _htm_path path;
     double *ab;
@@ -102,7 +103,7 @@ int64_t htm_tree_s2cpoly(const struct htm_tree *tree,
               {
                 uint64_t i;
                 for (i = index; i < index + curcount; ++i) {
-                  if (htm_s2cpoly_cv3(poly, (struct htm_v3*)
+                  if (htm_s2cpoly_cv3_template<T>(poly, reinterpret_cast<T*>
                                       (static_cast<char*>(tree->entries)
                                        + i*tree->entry_size))) {
                     if(!callback
@@ -144,6 +145,31 @@ ascend:
         *err = HTM_OK;
     }
     return count;
+}
+
+extern "C" {
+int64_t htm_tree_s2cpoly(const struct htm_tree *tree,
+                         const struct htm_s2cpoly *poly,
+                         enum htm_errcode *err,
+                         htm_callback callback)
+{
+  if(tree->element_types.at(0)==H5::PredType::NATIVE_DOUBLE)
+    {
+      htm_tree_s2cpoly_template<double>(tree,poly,err,callback);
+    }
+  else if(tree->element_types.at(0)==H5::PredType::NATIVE_FLOAT)
+    {
+      htm_tree_s2cpoly_template<float>(tree,poly,err,callback);
+    }
+  else
+    {
+      if(err!=nullptr)
+        {
+          *err=HTM_ETREE;
+        }
+      return -1;
+    }
+  return 0;
 }
 
 }

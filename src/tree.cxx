@@ -19,10 +19,7 @@ e
 
 #include "tinyhtm/varint.h"
 
-#ifdef __cplusplus
 extern "C" {
-#endif
-
 
 enum htm_errcode htm_tree_init(struct htm_tree *tree,
                                const char * const datafile)
@@ -241,103 +238,5 @@ enum htm_errcode htm_tree_lock(struct htm_tree *tree, size_t datathresh)
     return HTM_OK;
 }
 
-
-int64_t htm_tree_s2circle_scan(const struct htm_tree *tree,
-                               const struct htm_v3 *center,
-                               double radius,
-                               enum htm_errcode *err,
-                               htm_callback callback)
-{
-    double dist2;
-    int64_t count;
-    uint64_t i;
-
-    if (tree == NULL || center == NULL) {
-        if (err != NULL) {
-            *err = HTM_ENULLPTR;
-        }
-        return -1;
-    }
-    if (radius < 0.0) {
-        return 0;
-    } else if (radius >= 180.0) {
-        return (int64_t) tree->count;
-    }
-    dist2 = sin(radius * 0.5 * HTM_RAD_PER_DEG);
-    dist2 = 4.0 * dist2 * dist2;
-    count = 0;
-    for (i = 0, count = 0; i < tree->count; ++i) {
-      if (htm_v3_dist2(center,
-                       (struct htm_v3*)(static_cast<char*>(tree->entries)+i*tree->entry_size))
-          <= dist2) {
-          if(!callback
-             || callback(static_cast<char*>(tree->entries)+i*tree->entry_size,
-                         tree->num_elements_per_entry,tree->element_types,
-                         tree->element_names))
-            ++count;
-        }
-    }
-    return count;
 }
-
-
-int64_t htm_tree_s2ellipse_scan(const struct htm_tree *tree,
-                                const struct htm_s2ellipse *ellipse,
-                                enum htm_errcode *err,
-                                htm_callback callback)
-{
-    int64_t count;
-    uint64_t i;
-
-    if (tree == NULL || ellipse == NULL) {
-        if (err != NULL) {
-            *err = HTM_ENULLPTR;
-        }
-        return -1;
-    }
-    count = 0;
-    for (i = 0, count = 0; i < tree->count; ++i) {
-      if (htm_s2ellipse_cv3(ellipse, (struct htm_v3*)(static_cast<char*>(tree->entries)+i*tree->entry_size)) != 0) {
-          if(!callback
-             || callback(static_cast<char*>(tree->entries)+i*tree->entry_size,
-                         tree->num_elements_per_entry,tree->element_types,
-                         tree->element_names))
-            ++count;
-        }
-    }
-    return count;
-}
-
-
-int64_t htm_tree_s2cpoly_scan(const struct htm_tree *tree,
-                              const struct htm_s2cpoly *poly,
-                              enum htm_errcode *err,
-                              htm_callback callback)
-{
-    int64_t count;
-    uint64_t i;
-
-    if (tree == NULL || poly == NULL) {
-        if (err != NULL) {
-            *err = HTM_ENULLPTR;
-        }
-        return -1;
-    }
-    count = 0;
-    for (i = 0, count = 0; i < tree->count; ++i) {
-      if (htm_s2cpoly_cv3(poly, (struct htm_v3*)(static_cast<char*>(tree->entries)+i*tree->entry_size)) != 0) {
-          if(!callback
-             || callback(static_cast<char*>(tree->entries)+i*tree->entry_size,
-                         tree->num_elements_per_entry,tree->element_types,
-                         tree->element_names))
-            ++count;
-        }
-    }
-    return count;
-}
-
-
-#ifdef __cplusplus
-}
-#endif
 

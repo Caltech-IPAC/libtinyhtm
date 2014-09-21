@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include <sys/mman.h>
 
 #include "tinyhtm/htm.h"
@@ -7,14 +9,14 @@
 
 #include "htm/_htm_s2circle_htmcov.hxx"
 #include "_htm_subdivide.hxx"
+#include "htm/htm_v3_distance2.hxx"
 
-extern "C" {
-
-int64_t htm_tree_s2circle(const struct htm_tree *tree,
-                          const struct htm_v3 *center,
-                          double radius,
-                          enum htm_errcode *err,
-                          htm_callback callback)
+template <typename T>
+int64_t htm_tree_s2circle_template(const struct htm_tree *tree,
+                                   const struct htm_v3 *center,
+                                   double radius,
+                                   enum htm_errcode *err,
+                                   htm_callback callback)
 {
     struct _htm_path path;
     double d2;
@@ -27,7 +29,7 @@ int64_t htm_tree_s2circle(const struct htm_tree *tree,
         return -1;
     }
     if (tree->index == MAP_FAILED) {
-        return htm_tree_s2circle_scan(tree, center, radius, err, callback);
+      return htm_tree_s2circle_scan(tree, center, radius, err, callback);
     } else if (radius < 0.0) {
         /* circle is empty */
         return 0;
@@ -73,6 +75,7 @@ int64_t htm_tree_s2circle(const struct htm_tree *tree,
               }
             if(coverage==HTM_CONTAINS || coverage==HTM_INTERSECT)
               {
+                // FIXME: Why is 20 hardcoded here?
                 if (level < 20 && curcount >= tree->leafthresh) {
                   s = _htm_subdivide(curnode, s);
                   if (s == NULL) {
@@ -100,9 +103,9 @@ int64_t htm_tree_s2circle(const struct htm_tree *tree,
                 uint64_t i;
                 for (i = index; i < index + curcount; ++i) {
                   if (coverage==HTM_INSIDE
-                      || htm_v3_dist2(center,(struct htm_v3*)
-                                      (static_cast<char*>(tree->entries)
-                                       + i*tree->entry_size)) <= d2)
+                      || htm_v3_distance2<T>(center,reinterpret_cast<T*>
+                                             (static_cast<char*>(tree->entries)
+                                              + i*tree->entry_size)) <= d2)
                     {
                       if(!callback
                          || callback(static_cast<char*>(tree->entries)
@@ -143,4 +146,30 @@ ascend:
     return count;
 }
 
+extern "C" {
+
+int64_t htm_tree_s2circle(const struct htm_tree *tree,
+                          const struct htm_v3 *center,
+                          double radius,
+                          enum htm_errcode *err,
+                          htm_callback callback)
+{
+  if(tree->element_types.at(0)==H5::PredType::NATIVE_DOUBLE)
+    {
+      htm_tree_s2circle_template<double>(tree,center,radius,err,callback);
+    }
+  else if(tree->element_types.at(0)==H5::PredType::NATIVE_FLOAT)
+    {
+      htm_tree_s2circle_template<float>(tree,center,radius,err,callback);
+    }
+  else
+    {
+      if(err!=nullptr)
+        {
+          *err=HTM_ETREE;
+        }
+      return -1;
+    }
+  return 0;
+}
 }
