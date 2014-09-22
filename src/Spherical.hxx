@@ -28,12 +28,21 @@ namespace tinyhtm
     }
 
     Spherical(const Cartesian &c);
+    Spherical(const Spherical &s): Spherical(s.lon(),s.lat()) {}
 
     double lon() const
     {
       return sc.lon;
     }
+    double & lon()
+    {
+      return sc.lon;
+    }
     double lat() const
+    {
+      return sc.lat;
+    }
+    double & lat()
     {
       return sc.lat;
     }
