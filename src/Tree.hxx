@@ -1,5 +1,4 @@
-#ifndef TINYHTM_TREE_HXX
-#define TINYHTM_TREE_HXX
+#pragma once
 
 namespace tinyhtm
 {
@@ -17,4 +16,3 @@ namespace tinyhtm
   };
 }
 
-#endif
