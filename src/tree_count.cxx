@@ -138,6 +138,10 @@ int print_entry(void *entry, int num_elements,
         }
       else if(types[j]==H5::PredType::NATIVE_FLOAT)
         {
+          printf(" %lf",*((float *)(entry)+j));
+        }
+      else if(types[j]==H5::PredType::NATIVE_DOUBLE)
+        {
           printf(" %lf",*((double *)(entry)+j));
         }
       else
