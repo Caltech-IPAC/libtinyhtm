@@ -1,0 +1,14 @@
+Minimalistic HTM indexing implementation.
+
+This software is based on work by A. Szalay, T. Budavari, G. Fekete at
+The Johns Hopkins University, and Jim Gray, Microsoft Research. See
+the following links for more information:
+
+http://voservices.net/spherical/
+http://adsabs.harvard.edu/abs/2010PASP..122.1375B
+
+authors: Serge Monkewitz, Walter Landry
+
+Tinyhtm is distributed under a 3 clause BSD-style license.  See
+COPYING for details.
+
