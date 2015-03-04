@@ -1,10 +1,10 @@
 WAF=python waf
 CONFIGURE=sh configure
 
-all: distclean configure build
+all: configure build
 
 configure:
-	sh configure --ccfits-dir=$(CM_TPS_DIR) --hdf5-dir=$(CM_TPS_DIR) --boost-dir=${CM_ENV_DIR}/misc
+	@$(WAF) configure --ccfits-dir=$(CM_TPS_DIR) --hdf5-dir=$(CM_TPS_DIR) --boost-dir=${CM_ENV_DIR}/misc --prefix=${PWD}
 
 build:
 	@$(WAF) build
@@ -13,7 +13,7 @@ clean:
 	@$(WAF) clean
 
 distclean:
-	@$(WAF) distclean
+	rm -rf build
 
 list:
 	@$(WAF) list
