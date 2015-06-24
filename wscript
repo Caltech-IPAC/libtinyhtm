@@ -19,7 +19,7 @@ out = 'build'
 
 
 def options(ctx):
-    ctx.load('compiler_c compiler_cxx CCfits hdf5_cxx boost gnu_dirs')
+    ctx.load('compiler_c compiler_cxx cxx11 hdf5_cxx boost gnu_dirs')
     ctx.add_option('--debug', help='Include debug symbols and turn ' +
                                    'compiler optimizations off',
                    action='store_true', default=False, dest='debug')
@@ -34,12 +34,11 @@ def options(ctx):
 
 def configure(ctx):
     ctx.env.TINYHTM_VERSION = VERSION
-    ctx.load('compiler_c compiler_cxx CCfits hdf5_cxx boost gnu_dirs')
+    ctx.load('compiler_c compiler_cxx cxx11 hdf5_cxx boost gnu_dirs')
     ctx.check_boost('filesystem system iostreams')
     
     ctx.env.append_value('CXXFLAGS', '-Wall')
     ctx.env.append_value('CXXFLAGS', '-Wextra')
-    ctx.env.append_value('CXXFLAGS', '-std=c++11')
     ctx.env.append_value('CXXFLAGS', '-D__STDC_CONSTANT_MACROS')
 
     ctx.env.append_value('CFLAGS', '-Wall')
@@ -147,7 +146,7 @@ def build(ctx):
         target='tinyhtm',
         name='tinyhtm_st',
         install_path=ctx.env.LIBDIR,
-        use='M hdf5 hdf5_cxx'
+        use='cxx11 M hdf5 hdf5_cxx'
     )
     # shared library (required by cgo)
     ctx.shlib(
@@ -156,7 +155,7 @@ def build(ctx):
         target='tinyhtm',
         name='tinyhtm_sh',
         install_path=ctx.env.LIBDIR,
-        use='M hdf5 hdf5_cxx'
+        use='cxx11 M hdf5 hdf5_cxx'
     )
 
     # C++ interface
@@ -194,7 +193,7 @@ def build(ctx):
         target='tinyhtmcxx',
         name='tinyhtmcxx_st',
         install_path=ctx.env.LIBDIR,
-        use='M hdf5 hdf5_cxx tinyhtm BOOST'
+        use='cxx11 M hdf5 hdf5_cxx tinyhtm BOOST'
     )
     # shared library
     ctx.shlib(
@@ -203,7 +202,7 @@ def build(ctx):
         target='tinyhtmcxx',
         name='tinyhtmcxx_sh',
         install_path=ctx.env.LIBDIR,
-        use='M hdf5 hdf5_cxx tinyhtm BOOST'
+        use='cxx11 M hdf5 hdf5_cxx tinyhtm BOOST'
     )
 
     # tree index generator
@@ -219,7 +218,7 @@ def build(ctx):
         target='htm_tree_gen',
         name='htm_tree_gen',
         install_path=ctx.env.BINDIR,
-       use='M PTHREAD tinyhtm_st tinyhtmcxx_st hdf5_cxx BOOST'
+       use='cxx11 M PTHREAD tinyhtm_st tinyhtmcxx_st hdf5_cxx BOOST'
    )
     # Convert old format to hdf5
     ctx.program(
@@ -229,7 +228,7 @@ def build(ctx):
         target='htm_convert_to_hdf5',
         name='htm_convert_to_hdf5',
         install_path=ctx.env.BINDIR,
-        use='M PTHREAD tinyhtm_st hdf5_cxx tinyhtmcxx_st BOOST'
+        use='cxx11 M PTHREAD tinyhtm_st hdf5_cxx tinyhtmcxx_st BOOST'
     )
 
     # point counting utility
@@ -239,7 +238,7 @@ def build(ctx):
         target='htm_tree_count',
         name='htm_tree_count',
         install_path=ctx.env.BINDIR,
-        use='M tinyhtm_st hdf5_cxx'
+        use='cxx11 M tinyhtm_st hdf5_cxx'
     )
     # id listing utility
     ctx.program(
@@ -248,7 +247,7 @@ def build(ctx):
         target='htm_id_list',
         name='htm_id_list',
         install_path=ctx.env.BINDIR,
-        use='M tinyhtm_st'
+        use='cxx11 M tinyhtm_st'
     )
     # test cases
     ctx.objects(source='test/rand.cxx test/cmp.cxx',
@@ -260,7 +259,7 @@ def build(ctx):
             includes='src include/tinyhtm',
             target='test/test_' + t,
             install_path=False,
-            use='testobjs M tinyhtm_st'
+            use='cxx11 testobjs M tinyhtm_st'
         )
     # install headers
     ctx.install_files(ctx.env.INCLUDEDIR, ['src/tinyhtm.h'])
