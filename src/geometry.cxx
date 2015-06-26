@@ -57,7 +57,6 @@ enum htm_errcode htm_v3_ne(struct htm_v3 *north,
 }
 
 
-static const double HTM_NAN = 0.0 / 0.0;
 static const double HTM_RMAX = 90.0 - 0.001/3600.0;
 
 enum htm_errcode htm_v3_tanrot(double *angle,
@@ -630,82 +629,6 @@ int htm_s2cpolyplus_cv3( const struct htm_s2cpoly * pa, const struct htm_v3 * v,
     }
     return TRUE;
 }
-
-//  is vector in puffed polygon ?
-int htm_puffpoly_cv3( const struct htm_puff_poly * pp, const struct htm_v3 * v ) {
-    
-    const size_t    n     = pp->polygon.n;
-          size_t    i     = 0;
-          double    addon = 0.0;
-    
-    switch ( pp->pufftyp ) {
-        
-        case UNPUFFED:
-        default:
-            break;
-        
-        case PUSH_PLANE:
-            addon = pp->puffage;
-            break;
-        
-        case ADD_RADIUS:
-            //  placeholder for future added puffages
-            addon = pp->puffage;
-            break;
-    }
-    
-    for (i = 0; i < n; ++i) {
-        if ( 0.0 > ( addon + htm_v3_dot( v, &pp->polygon.ve[n + i] )) ) {
-            return FALSE;
-        }
-    }
-    return TRUE;
-}
-
-//  polygon --> puffed polygon
-struct htm_puff_poly *   puff_polygon( const struct htm_s2cpoly pgon, const enum puff_type h2p, const double by ) {
-    
-  struct htm_puff_poly * ppgon
-    = static_cast<htm_puff_poly*>(malloc( sizeof( struct htm_puff_poly )));
-    
-    ppgon->polygon = pgon;
-    ppgon->pufftyp = h2p;      //  How2Puff
-    
-    switch ( h2p ) {
-        
-        case UNPUFFED:
-        default:
-            ppgon->puffage = 0.0;
-            break;
-        
-        case PUSH_PLANE:
-            ppgon->puffage = by;
-            break;
-        
-        case ADD_RADIUS:
-            //  placeholder for now
-            ppgon->puffage = by;
-            break;
-    }
-    
-    //  free( pgon );
-    
-    return ppgon;
-}
-
-//  puffed polygon --> polygon
-struct htm_s2cpoly * unpuff_polygon( struct htm_puff_poly * ppgon ) {
-    
-  struct htm_s2cpoly * pgon
-    = static_cast<htm_s2cpoly *>(malloc( sizeof( struct htm_s2cpoly )));
-    
-    *pgon = ppgon->polygon;
-    
-    //  free( ppgon );
-    
-    return pgon;
-}
-
 
 double htm_s2cpoly_area(const struct htm_s2cpoly *poly)
 {

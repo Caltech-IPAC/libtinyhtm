@@ -445,28 +445,6 @@ struct htm_s2cpoly {
 };
 
 
-/** A puffed-up polygon on the sphere.
-
-    Based on htm_s2cpoly but potentially including
-    a variety of sorts of puffing-up.
-
-    Note that vertices are stored as unit vectors, but that
-    edge plane normals are not necessarily normalized.
-  */
-
-enum puff_type {
-	UNPUFFED,
-	PUSH_PLANE,
-	ADD_RADIUS
-};
-
-struct htm_puff_poly {
-    struct htm_s2cpoly polygon;
-    double             puffage;
-    enum puff_type     pufftyp;
-};
-
-
 /** Returns a pointer to the vertices of \p poly.
   */
 HTM_INLINE struct htm_v3 * htm_s2cpoly_verts(struct htm_s2cpoly *poly)
@@ -560,29 +538,11 @@ struct htm_s2cpoly * htm_s2cpoly_line(const struct htm_v3 *v1,
   */
 int htm_s2cpoly_cv3( const struct htm_s2cpoly * p, const struct htm_v3 * v );
 
-/** Returns 1 if the spherical convex htm_puff_poly puffed-up polygon \p pp 
-    contains vector \p v, and 0 otherwise.  Arguments must not be NULL pointers.
-  */
-int htm_puffpoly_cv3( const struct htm_puff_poly * pp, const struct htm_v3 * v );
-
 /** Returns 1 if the spherical convex htm_poly polygon \p pp ,
     plus a dot product add-on, contains vector \p v, and 0 otherwise.  
     Arguments must not be NULL pointers.
   */
 int htm_s2cpolyplus_cv3( const struct htm_s2cpoly * pa, const struct htm_v3 * v, double addon );
-
-
-/** Returns a new htm_puff_poly puffed-up polygon, given htm_s2cpoly \p pgon, 
-    enum puff_type \p h2p (How2Puff), & factor \p by (puff-BY-how-much), which 
-    are used to add puffing of the appropriate kind and amount.  
-  */
-struct htm_puff_poly *   puff_polygon( const struct htm_s2cpoly pgon, const enum puff_type h2p, const double by );
-
-/** Returns a new htm_s2cpoly polygon, given htm_puff_poly \p ppgon.  
-    (removes all puffing)
-  */
-struct htm_s2cpoly   * unpuff_polygon( struct htm_puff_poly * ppgon );
-
 
 /** Returns the area (in steradians) enclosed by the given spherical
     convex polygon. If \p poly is NULL, 0.0 is returned.
