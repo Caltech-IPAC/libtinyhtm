@@ -23,9 +23,7 @@ int64_t htm_tree_s2ellipse_scan_template(const struct htm_tree *tree,
                                       (tree->entries)+i*tree->entry_size)) != 0)
         {
           if(!callback
-             || callback(static_cast<char*>(tree->entries)+i*tree->entry_size,
-                         tree->num_elements_per_entry,tree->element_types,
-                         tree->element_names))
+             || callback(static_cast<char*>(tree->entries)+i*tree->entry_size))
             ++count;
         }
     }

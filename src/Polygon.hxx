@@ -16,7 +16,7 @@ namespace tinyhtm
     Polygon(const std::vector<Spherical> &Vertices):
       vertices(Vertices) {}
 
-    int64_t search(const Tree &tree, htm_callback fn) const override
+    int64_t search(const Tree &tree, htm_callback callback) const override
     {
       enum htm_errcode ec;
       
@@ -26,7 +26,7 @@ namespace tinyhtm
       struct htm_s2cpoly *poly=htm_s2cpoly_init(poly_vertices.data(),
                                                 poly_vertices.size(), &ec);
 
-      int64_t count=htm_tree_s2cpoly(&(tree.tree), poly, &ec, fn);
+      int64_t count=htm_tree_s2cpoly(&(tree.tree), poly, &ec, callback);
       free(poly);
       if(ec!=HTM_OK)
         throw Exception("Corrupted index file");

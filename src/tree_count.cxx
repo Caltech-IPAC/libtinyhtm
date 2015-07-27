@@ -5,6 +5,7 @@
     \copyright  IPAC/Caltech
   */
 #include <stdexcept>
+#include <functional>
 
 #include <errno.h>
 #include <stdarg.h>
@@ -116,41 +117,54 @@ static void print_range(const struct htm_range *range)
     }
 }
 
-int print_entry(void *entry, int num_elements,
-                const std::vector<H5::DataType> &types,
-                const std::vector<std::string> &names)
+namespace
 {
-  int j;
-  static int print_header=1;
-
-  if(print_header)
-    {
-      for(j=0; j<num_elements; ++j)
-        printf("%s\t",names[j].c_str());
-      printf("\n");
-      print_header=0;
-    }
-  for(j=0; j<num_elements; ++j)
-    {
-      if(types[j]==H5::PredType::NATIVE_INT)
-        {
-          printf(" %ld",*((int64_t *)(entry)+j));
-        }
-      else if(types[j]==H5::PredType::NATIVE_FLOAT)
-        {
-          printf(" %lf",*((float *)(entry)+j));
-        }
-      else if(types[j]==H5::PredType::NATIVE_DOUBLE)
-        {
-          printf(" %lf",*((double *)(entry)+j));
-        }
-      else
-        {
-          throw std::runtime_error("Unknown DataType: " + types[j].fromClass());
-        }
-    }
-  printf("\n");
-  return 1;
+class Print_Entry
+{
+public:
+  const std::vector<H5::DataType> &types;
+  const std::vector<std::string> &names;
+  bool print_header=true;
+  Print_Entry(const std::vector<H5::DataType> &Types,
+              const std::vector<std::string> &Names):
+    types(Types), names(Names) {}
+  bool print (const char *entry)
+  {
+    if(print_header)
+      {
+        for (auto &name: names)
+          printf("%s\t",name.c_str());
+        printf("\n");
+        print_header=false;
+      }
+    size_t offset(0);
+    for (auto &type: types)
+      {
+        if(type==H5::PredType::NATIVE_INT)
+          {
+            printf(" %ld",*((int64_t *)(entry+offset)));
+            offset+=sizeof(int64_t);
+          }
+        else if(type==H5::PredType::NATIVE_FLOAT)
+          {
+            printf(" %lf",*((float *)(entry+offset)));
+            offset+=sizeof(float);
+          }
+        else if(type==H5::PredType::NATIVE_DOUBLE)
+          {
+            printf(" %lf",*((double *)(entry+offset)));
+            offset+=sizeof(double);
+          }
+        else
+          {
+            throw std::runtime_error("Unknown DataType: "
+                                     + type.fromClass());
+          }
+      }
+    printf("\n");
+    return true;
+  }
+};
 }
 
 static void circle_count(const char * const datafile,
@@ -184,9 +198,18 @@ static void circle_count(const char * const datafile,
         }
         print_range(&range);
     } else {
-        int64_t count =
-          htm_tree_s2circle(&tree, &cen, r, &ec,(print==0 ? htm_callback() :
-                                                 print_entry));
+        int64_t count;
+        if (print==0)
+          {
+            count = htm_tree_s2circle(&tree, &cen, r, &ec, htm_callback());
+          }
+        else
+          {
+            Print_Entry print_entry(tree.element_types,tree.element_names);
+            count = htm_tree_s2circle(&tree, &cen, r, &ec,
+                                      std::bind(&Print_Entry::print,&print_entry,
+                                                std::placeholders::_1));
+          }
         htm_tree_destroy(&tree);
         if (ec != HTM_OK) {
             err("Failed to count points in circle: %s", htm_errmsg(ec));
@@ -234,9 +257,19 @@ static void ellipse_count(const char * const datafile,
         }
         print_range(&range);
     } else {
-        int64_t count =
-          htm_tree_s2ellipse(&tree, &ellipse, &ec,(print==0 ? htm_callback() :
-                                                   print_entry));
+        int64_t count;
+        if (print==0)
+          {
+            count = htm_tree_s2ellipse(&tree, &ellipse, &ec,htm_callback());
+          }
+        else
+          {
+            Print_Entry print_entry(tree.element_types,tree.element_names);
+            count = htm_tree_s2ellipse(&tree, &ellipse, &ec,
+                                       std::bind(&Print_Entry::print,
+                                                 &print_entry,
+                                                 std::placeholders::_1));
+          }
         htm_tree_destroy(&tree);
         if (ec != HTM_OK) {
             err("Failed to count points in ellipse: %s", htm_errmsg(ec));
@@ -294,9 +327,18 @@ static void hull_count(const char * const datafile,
         }
         print_range(&range);
     } else {
-        int64_t count =
-          htm_tree_s2cpoly(&tree, poly, &ec,(print==0 ? htm_callback() :
-                                             print_entry));
+        int64_t count;
+        if (print==0)
+          {
+            count = htm_tree_s2cpoly(&tree, poly, &ec, htm_callback());
+          }
+        else
+          {
+            Print_Entry print_entry(tree.element_types,tree.element_names);
+            count = htm_tree_s2cpoly(&tree, poly, &ec,
+                                     std::bind(&Print_Entry::print,&print_entry,
+                                               std::placeholders::_1));
+          }
         htm_tree_destroy(&tree);
         free(poly);
         if (ec != HTM_OK) {

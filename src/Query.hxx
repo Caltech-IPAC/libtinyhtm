@@ -50,7 +50,7 @@ namespace tinyhtm
 
     int64_t count() const;
     std::pair<int64_t,int64_t> range() const;
-    int64_t search(htm_callback fn) const;
+    int64_t search(htm_callback callback) const;
   };
 }
 

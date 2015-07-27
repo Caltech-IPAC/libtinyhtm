@@ -15,11 +15,11 @@ namespace tinyhtm
 
     Circle(const Spherical &Center, const double &R): center(Center), r(R) {}
 
-    int64_t search(const Tree &tree, htm_callback fn) const override
+    int64_t search(const Tree &tree, htm_callback callback) const override
     {
       Cartesian c(center);
       enum htm_errcode ec;
-      int64_t count=htm_tree_s2circle(&(tree.tree), &(c.v3), r, &ec, fn);
+      int64_t count=htm_tree_s2circle(&(tree.tree), &(c.v3), r, &ec, callback);
       if(ec!=HTM_OK)
         throw Exception("Corrupted index file");
       return count;

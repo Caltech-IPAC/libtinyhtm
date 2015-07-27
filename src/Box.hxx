@@ -16,7 +16,7 @@ namespace tinyhtm
     Box(const Spherical &Center, const Spherical &Size):
       center(Center), size(Size), rotation(0) {}
 
-    int64_t search(const Tree &tree, htm_callback fn) const override
+    int64_t search(const Tree &tree, htm_callback callback) const override
     {
       Cartesian c(center);
       enum htm_errcode ec;
@@ -30,7 +30,7 @@ namespace tinyhtm
                         + std::to_string(size.lon()) + " "
                         + std::to_string(size.lat()));
 
-      int64_t count=htm_tree_s2cpoly(&(tree.tree), poly, &ec, fn);
+      int64_t count=htm_tree_s2cpoly(&(tree.tree), poly, &ec, callback);
       free(poly);
       if(ec!=HTM_OK)
         throw Exception("Corrupted index file");

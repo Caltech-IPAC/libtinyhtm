@@ -63,7 +63,7 @@ void htm_tree_destroy(struct htm_tree *tree);
 enum htm_errcode htm_tree_lock(struct htm_tree *tree, size_t datathresh);
 
 
-typedef std::function<bool(void*, int, const std::vector<H5::DataType> &, const std::vector<std::string> &)> htm_callback;
+typedef std::function<bool(const char*)> htm_callback;
 
 /* ================================================================ */
 /** @}

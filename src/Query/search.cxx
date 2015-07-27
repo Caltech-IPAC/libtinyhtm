@@ -2,21 +2,21 @@
 
 namespace tinyhtm
 {
-  int64_t Query::search(htm_callback fn) const
+  int64_t Query::search(htm_callback callback) const
   {
     int64_t count;
     enum htm_errcode ec;
     if(type==Type::circle)
       {
-        count=htm_tree_s2circle(&(tree.tree), &(center.v3), r, &ec, fn);
+        count=htm_tree_s2circle(&(tree.tree), &(center.v3), r, &ec, callback);
       }
     else if(type==Type::ellipse)
       {
-        count=htm_tree_s2ellipse(&(tree.tree), &(ellipse.ellipse), &ec, fn);
+        count=htm_tree_s2ellipse(&(tree.tree), &(ellipse.ellipse), &ec, callback);
       }
     else if(type==Type::polygon)
       {
-        count=htm_tree_s2cpoly(&(tree.tree), poly.get(), &ec, fn);
+        count=htm_tree_s2cpoly(&(tree.tree), poly.get(), &ec, callback);
       }
     else
       throw Exception("Bad tinyhtm::Query::Type");

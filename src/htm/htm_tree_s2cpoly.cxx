@@ -108,9 +108,7 @@ int64_t htm_tree_s2cpoly_template(const struct htm_tree *tree,
                                        + i*tree->entry_size))) {
                     if(!callback
                        || callback(static_cast<char*>(tree->entries)
-                                   + i*tree->entry_size,
-                                   tree->num_elements_per_entry,
-                                   tree->element_types, tree->element_names))
+                                   + i*tree->entry_size))
                       ++count;
                   }
                 }
