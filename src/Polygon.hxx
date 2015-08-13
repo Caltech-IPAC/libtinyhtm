@@ -51,5 +51,39 @@ namespace tinyhtm
         size(max.lon()-min.lon(),max.lat()-min.lat());
       return std::make_pair(center,size);
     }
+
+    std::vector<htm_range> covering_ranges(const size_t &level, const size_t &max_ranges)
+    {
+      std::vector<htm_v3> xyz_vertices;
+      for (auto &v: vertices)
+        xyz_vertices.emplace_back(Cartesian(v).v3);
+      htm_s2cpoly *poly_cartesian=nullptr;
+      enum htm_errcode ec;
+      poly_cartesian = htm_s2cpoly_hull(xyz_vertices.data(), xyz_vertices.size(), &ec);
+      if (ec != HTM_OK)
+        {
+          if (poly_cartesian != nullptr)
+            free (poly_cartesian);
+          throw Exception(std::string("Failed to convert a polygon from spherical coordinates to unit vectors: ")
+                          + htm_errmsg(ec));
+        }
+      
+      struct htm_ids *ids = nullptr;
+      ids = htm_s2cpoly_ids(ids, poly_cartesian, level, max_ranges, &ec);
+      free (poly_cartesian);
+      if (ec != HTM_OK)
+        {
+          if (ids != nullptr)
+            free (ids);
+          throw Exception(std::string("Failed to find HTM triangles overlapping polygon: ")
+                          + htm_errmsg(ec));
+        }
+      std::vector<htm_range> ranges;
+      ranges.reserve(ids->n);
+      for (size_t r=0; r<ids->n; ++r)
+        ranges.push_back(ids->range[r]);
+      free (ids);
+      return ranges;
+    }
   };
 }

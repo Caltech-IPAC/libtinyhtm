@@ -253,14 +253,15 @@ def build(ctx):
     ctx.objects(source='test/rand.cxx test/cmp.cxx',
                 includes='src include/tinyhtm',
                 target='testobjs')
-    for t in ('htm', 'geometry', 'select'):
+    for t in ('htm', 'geometry', 'select', 'ranges'):
         ctx.program(
             source='test/test_%s.cxx' % t,
             includes='src include/tinyhtm',
             target='test/test_' + t,
             install_path=False,
-            use='cxx11 testobjs M tinyhtm_st'
+            use='cxx11 testobjs M tinyhtm_st tinyhtmcxx_st'
         )
+
     # install headers
     ctx.install_files(ctx.env.INCLUDEDIR, ['src/tinyhtm.h'])
     ctx.install_files(ctx.env.INCLUDEDIR + '/tinyhtm',
@@ -339,6 +340,7 @@ def test(ctx):
     tests.utest(source=ctx.path.get_bld().make_node('test/test_select'))
     tests.utest(source=ctx.path.get_bld().make_node('test/test_geometry'))
     tests.utest(source=ctx.path.get_bld().make_node('test/test_htm'))
+    tests.utest(source=ctx.path.get_bld().make_node('test/test_ranges'))
     tests.run(ctx)
     if not ctx.env['GCOV']:
         Logs.pprint('CYAN', 'configure did not find gcov or was not run with ' +

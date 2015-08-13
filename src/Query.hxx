@@ -18,6 +18,7 @@ namespace tinyhtm
     
     Tree tree;
     Type type;
+    // FIXME: Use shapes
     Cartesian center;
     double r;
     Ellipse ellipse;
