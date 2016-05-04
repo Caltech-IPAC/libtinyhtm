@@ -42,6 +42,43 @@ namespace tinyhtm
       free (ids);
       return ranges;
     }
+    double x() const
+    {
+      return ellipse.cen.x;
+    }
+    double y() const
+    {
+      return ellipse.cen.y;
+    }
+    double z() const
+    {
+      return ellipse.cen.z;
+    }
+    double xx() const
+    {
+      return ellipse.xx;
+    }
+    double xy() const
+    {
+      return ellipse.xy;
+    }
+    double xz() const
+    {
+      return ellipse.xz;
+    }
+    double yy() const
+    {
+      return ellipse.yy;
+    }
+    double yz() const
+    {
+      return ellipse.yz;
+    }
+    double zz() const
+    {
+      return ellipse.zz;
+    }
+
   };
 }
 
