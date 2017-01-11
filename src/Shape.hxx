@@ -11,6 +11,10 @@ namespace tinyhtm
   class Shape
   {
   public:
+    virtual int64_t count(const Tree &) const
+    {
+      throw Exception("Shape not valid");
+    };
     virtual int64_t search(const Tree &, htm_callback ) const
     {
       throw Exception("Shape not valid");
