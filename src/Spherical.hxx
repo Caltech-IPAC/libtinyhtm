@@ -1,9 +1,9 @@
 #ifndef TINYHTM_SPHERICAL_HXX
 #define TINYHTM_SPHERICAL_HXX
 
-#include <sstream>
 #include "tinyhtm.h"
 #include "Exception.hxx"
+#include <sstream>
 #include <iostream>
 
 namespace tinyhtm
