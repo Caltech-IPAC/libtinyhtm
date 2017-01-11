@@ -14,26 +14,18 @@ namespace tinyhtm
   class Query
   {
   public:
-    enum class Type {circle,ellipse,polygon};
-    
     Tree tree;
-    Type type;
-    // FIXME: Use shapes
-    Cartesian center;
-    double r;
-    Ellipse ellipse;
-    std::vector<htm_v3> verts;
-    std::unique_ptr<htm_s2cpoly> poly;
+    std::unique_ptr<Shape> shape;
     
     /// Circle
     Query(const std::string &data_file, const Spherical &spherical,
-          const double &R): tree(data_file), type(tinyhtm::Query::Type::circle),
-                            center(spherical), r(R) {}
+          const double &R): tree(data_file),
+                            shape(std::make_unique<Circle>(spherical,r)) {}
 
     /// Ellipse
     Query(const std::string &data_file,
-          const Ellipse &e): tree(data_file), 
-                             type(tinyhtm::Query::Type::ellipse), ellipse(e) {}
+          const Ellipse &e): tree(data_file),
+                             shape(std::make_unique<Ellipse>(e)) {}
 
     /// Polygon
     Query(const std::string &data_file,
@@ -49,9 +41,14 @@ namespace tinyhtm
           const std::string &query_shape,
           const std::string &vertex_string);
 
-    int64_t count() const;
-    std::pair<int64_t,int64_t> range() const;
-    int64_t search(htm_callback callback) const;
+    int64_t count() const
+    {
+      return shape->count();
+    }
+    int64_t search(htm_callback callback) const
+    {
+      return shape->search();
+    }
   };
 }
 

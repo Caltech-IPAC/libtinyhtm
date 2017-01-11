@@ -26,17 +26,14 @@ namespace tinyhtm
       return count;
     }
 
-    bool valid() const override
-    {
-      return true;
-    }
-
     std::pair<Spherical,Spherical> bounding_box() const override
     {
       return std::make_pair(center,Spherical(2*r,2*r));
     }
 
-    std::vector<htm_range> covering_ranges(const size_t &level, const size_t &max_ranges)
+    std::vector<htm_range> covering_ranges(const size_t &level,
+                                           const size_t &max_ranges)
+      const override
     {
       Cartesian cartesian(center);
       struct htm_ids *ids = nullptr;

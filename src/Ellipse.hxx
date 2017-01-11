@@ -1,8 +1,10 @@
 #pragma once
 
+#include "Shape.hxx"
+
 namespace tinyhtm
 {
-  class Ellipse
+  class Ellipse: public Shape
   {
   public:
     struct htm_s2ellipse ellipse;
@@ -21,9 +23,10 @@ namespace tinyhtm
           throw Exception(ss.str());
         }
     }
-    Ellipse(){}
-    
-    std::vector<htm_range> covering_ranges(const size_t &level, const size_t &max_ranges)
+
+    std::vector<htm_range> covering_ranges(const size_t &level,
+                                           const size_t &max_ranges)
+      const override
     {
       struct htm_ids *ids = nullptr;
       enum htm_errcode ec;
@@ -78,7 +81,6 @@ namespace tinyhtm
     {
       return ellipse.zz;
     }
-
   };
 }
 
