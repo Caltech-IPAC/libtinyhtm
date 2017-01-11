@@ -52,7 +52,9 @@ namespace tinyhtm
       return std::make_pair(center,size);
     }
 
-    std::vector<htm_range> covering_ranges(const size_t &level, const size_t &max_ranges)
+    std::vector<htm_range> covering_ranges(const size_t &level,
+                                           const size_t &max_ranges)
+      const override
     {
       std::vector<htm_v3> xyz_vertices;
       for (auto &v: vertices)
