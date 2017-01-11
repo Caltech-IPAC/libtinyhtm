@@ -11,13 +11,14 @@ namespace tinyhtm
   {
   public:
     Spherical center, size;
-    double rotation;
 
     Box(const Spherical &Center, const Spherical &Size):
-      center(Center), size(Size), rotation(0) {}
+      center(Center), size(Size) {}
 
     int64_t search(const Tree &tree, htm_callback callback) const override
     {
+      /// rotation must be zero for bounding box to be correct.
+      double rotation=0;
       Cartesian c(center);
       enum htm_errcode ec;
       struct htm_s2cpoly *poly=htm_s2cpoly_box(&(c.v3), size.lon(),
