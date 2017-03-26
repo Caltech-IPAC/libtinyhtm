@@ -4,6 +4,7 @@
 
 #include "Spherical.hxx"
 #include "Cartesian.hxx"
+#include "Shape.hxx"
 
 namespace tinyhtm
 {

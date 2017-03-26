@@ -5,6 +5,7 @@
 
 #include "Spherical.hxx"
 #include "Cartesian.hxx"
+#include "Shape.hxx"
 
 namespace tinyhtm
 {
@@ -41,6 +42,8 @@ namespace tinyhtm
             std::numeric_limits<double>::lowest());
       for(auto &v: vertices)
         {
+          // FIXME: This looks broken near the poles, where min(lat)
+          // can be the same as max(lat).
           min.lon()=std::min(min.lon(),v.lon());
           min.lat()=std::min(min.lat(),v.lat());
           max.lon()=std::max(max.lon(),v.lon());
