@@ -7,7 +7,6 @@
 #include "../tree_gen_context.hxx"
 #include "../node.hxx"
 
-void emit_node(mem_node * const node,
-               tree_gen_context &ctx);
+void emit_node (mem_node *const node, tree_gen_context &ctx);
 
 #endif

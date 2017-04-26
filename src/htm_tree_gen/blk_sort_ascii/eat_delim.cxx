@@ -11,17 +11,16 @@
 #include <sstream>
 #include <string>
 
-char * eat_delim(char *s, char delim, const std::string &fname, size_t lineno)
+char *eat_delim (char *s, char delim, const std::string &fname, size_t lineno)
 {
-  for (; isspace(*s) && *s != delim; ++s) { }
+  for (; isspace (*s) && *s != delim; ++s)
+    {
+    }
   if (*s != delim)
     {
       std::stringstream ss;
-      ss << "[" << fname
-         << ":" << lineno
-         << "] - invalid/truncated record";
-      throw std::runtime_error(ss.str());
+      ss << "[" << fname << ":" << lineno << "] - invalid/truncated record";
+      throw std::runtime_error (ss.str ());
     }
   return s + 1;
 }
-

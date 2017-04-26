@@ -35,7 +35,7 @@ extern "C" {
     \param[in] n        Number of elements in array.
     \param[in] k        The element to select.
   */
-double htm_select(double *array, size_t n, size_t k);
+double htm_select (double *array, size_t n, size_t k);
 
 /** Finds the k-th smallest value in an array of doubles (where k = 0 is the
     smallest element) using the linear time median-of-medians algorithm.
@@ -53,7 +53,7 @@ double htm_select(double *array, size_t n, size_t k);
     This function has the same inputs ond enforces the same invariants as
     htm_select().
   */
-double htm_selectmm(double *array, size_t n, size_t k);
+double htm_selectmm (double *array, size_t n, size_t k);
 
 /** Returns the smallest value in an array of doubles.
 
@@ -64,7 +64,7 @@ double htm_selectmm(double *array, size_t n, size_t k);
     \param[in] array    Array to select from.
     \param[in] n        Number of elements in array.
   */
-double htm_min(const double *array, size_t n);
+double htm_min (const double *array, size_t n);
 
 /** @}
   */
@@ -74,4 +74,3 @@ double htm_min(const double *array, size_t n);
 #endif
 
 #endif /* HTM_SELECT_H */
-

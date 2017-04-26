@@ -6,8 +6,7 @@
 
 #include "../mrg_seg.hxx"
 
-template<class T>
-void heap_up(mrg_seg<T> *segs, size_t n)
+template <class T> void heap_up (mrg_seg<T> *segs, size_t n)
 {
   mrg_seg<T> tmp;
   size_t p;

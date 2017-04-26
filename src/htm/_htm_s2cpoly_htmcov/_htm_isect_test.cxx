@@ -48,97 +48,121 @@
 
 #include "htm.hxx"
 
-int _htm_isect_test(const struct htm_v3 *v1,
-                           const struct htm_v3 *v2,
-                           const struct htm_v3 *n,
-                           const struct htm_s2cpoly *poly,
-                           double *ab)
+int _htm_isect_test (const struct htm_v3 *v1, const struct htm_v3 *v2,
+                     const struct htm_v3 *n, const struct htm_s2cpoly *poly,
+                     double *ab)
 {
-    struct htm_v3 c0;
-    struct htm_v3 c1;
-    double min_1, max_1, min_m1, max_m1;
-    size_t nv, i, neg, pos;
+  struct htm_v3 c0;
+  struct htm_v3 c1;
+  double min_1, max_1, min_m1, max_m1;
+  size_t nv, i, neg, pos;
 
-    htm_v3_cross(&c0, n, v1);
-    htm_v3_cross(&c1, v2, n);
-    nv = poly->n;
-    if (n->z != 0.0) {
-        double s = (n->z > 0.0) ? 1.0 : -1.0;
-        ab[0] = s * (c0.x * n->z - c0.z * n->x);
-        ab[1] = s * (c0.y * n->z - c0.z * n->y);
-        ab[2] = s * (c1.x * n->z - c1.z * n->x);
-        ab[3] = s * (c1.y * n->z - c1.z * n->y);
-        for (i = 0; i < nv; ++i) {
-            ab[2*i + 4] = s * (poly->ve[nv + i].x * n->z - poly->ve[nv + i].z * n->x);
-            ab[2*i + 5] = s * (poly->ve[nv + i].y * n->z - poly->ve[nv + i].z * n->y);
-        }
-    } else if (n->y != 0.0) {
-        double s = (n->y > 0.0) ? 1.0 : -1.0;
-        ab[0] = s * (c0.x * n->y - c0.y * n->x);
-        ab[1] = s * (c0.z * n->y);
-        ab[2] = s * (c1.x * n->y - c1.y * n->x);
-        ab[3] = s * (c1.z * n->y);
-        for (i = 0; i < nv; ++i) {
-            ab[2*i + 4] = s * (poly->ve[nv + i].x * n->y - poly->ve[nv + i].y * n->x);
-            ab[2*i + 5] = s * (poly->ve[nv + i].z * n->y);
-        }
-    } else if (n->x != 0.0) {
-        double s = (n->x > 0.0) ? 1.0 : -1.0;
-        ab[0] = s * (c0.y * n->x);
-        ab[1] = s * (c0.z * n->x);
-        ab[2] = s * (c1.y * n->x);
-        ab[3] = s * (c1.z * n->x);
-        for (i = 0; i < nv; ++i) {
-            ab[2*i + 4] = s * (poly->ve[nv + i].y * n->x);
-            ab[2*i + 5] = s * (poly->ve[nv + i].z * n->x);
-        }
-    } else {
-        return 0;
-    }
-    /* search for solutions to a*x +/- b >= 0, with constraint coeffs stored in
-       ab */
-
-    // FIXME: This may get optimized out.  Maybe we should use
-    // numeric_limits<>::max?
-    const double HTM_INF = 1.0 / 0.0;
-    const double HTM_NEG_INF = -1.0 / 0.0;
-
-    min_1 = min_m1 = HTM_NEG_INF;
-    max_1 = max_m1 = HTM_INF;
-    for (i = 0, neg = 0, pos = 0; i < nv + 2; ++i) {
-        double a = ab[2*i];
-        double b = ab[2*i + 1];
-        if (a == 0.0) {
-            if (b < 0.0) {
-                min_1 = HTM_INF;
-                max_1 = HTM_NEG_INF;
-            } else if (b > 0.0) {
-                min_m1 = HTM_INF;
-                max_m1 = HTM_NEG_INF;
-            }
-        } else if (a < 0.0) {
-            ++neg;
-            double d = -b / a;
-            if (d < max_1) {
-                max_1 = d;
-            }
-            if (-d < max_m1) {
-                max_m1 = -d;
-            }
-        } else {
-            ++pos;
-            double d = -b / a;
-            if (d > min_1) {
-                min_1 = d;
-            }
-            if (-d > min_m1) {
-                min_m1 = -d;
-            }
+  htm_v3_cross (&c0, n, v1);
+  htm_v3_cross (&c1, v2, n);
+  nv = poly->n;
+  if (n->z != 0.0)
+    {
+      double s = (n->z > 0.0) ? 1.0 : -1.0;
+      ab[0] = s * (c0.x * n->z - c0.z * n->x);
+      ab[1] = s * (c0.y * n->z - c0.z * n->y);
+      ab[2] = s * (c1.x * n->z - c1.z * n->x);
+      ab[3] = s * (c1.y * n->z - c1.z * n->y);
+      for (i = 0; i < nv; ++i)
+        {
+          ab[2 * i + 4]
+              = s * (poly->ve[nv + i].x * n->z - poly->ve[nv + i].z * n->x);
+          ab[2 * i + 5]
+              = s * (poly->ve[nv + i].y * n->z - poly->ve[nv + i].z * n->y);
         }
     }
-    if (min_1 <= max_1 || min_m1 <= max_m1) {
-        return 1;
+  else if (n->y != 0.0)
+    {
+      double s = (n->y > 0.0) ? 1.0 : -1.0;
+      ab[0] = s * (c0.x * n->y - c0.y * n->x);
+      ab[1] = s * (c0.z * n->y);
+      ab[2] = s * (c1.x * n->y - c1.y * n->x);
+      ab[3] = s * (c1.z * n->y);
+      for (i = 0; i < nv; ++i)
+        {
+          ab[2 * i + 4]
+              = s * (poly->ve[nv + i].x * n->y - poly->ve[nv + i].y * n->x);
+          ab[2 * i + 5] = s * (poly->ve[nv + i].z * n->y);
+        }
     }
-    return (neg == 0 || pos == 0);
+  else if (n->x != 0.0)
+    {
+      double s = (n->x > 0.0) ? 1.0 : -1.0;
+      ab[0] = s * (c0.y * n->x);
+      ab[1] = s * (c0.z * n->x);
+      ab[2] = s * (c1.y * n->x);
+      ab[3] = s * (c1.z * n->x);
+      for (i = 0; i < nv; ++i)
+        {
+          ab[2 * i + 4] = s * (poly->ve[nv + i].y * n->x);
+          ab[2 * i + 5] = s * (poly->ve[nv + i].z * n->x);
+        }
+    }
+  else
+    {
+      return 0;
+    }
+  /* search for solutions to a*x +/- b >= 0, with constraint coeffs stored in
+     ab */
+
+  // FIXME: This may get optimized out.  Maybe we should use
+  // numeric_limits<>::max?
+  const double HTM_INF = 1.0 / 0.0;
+  const double HTM_NEG_INF = -1.0 / 0.0;
+
+  min_1 = min_m1 = HTM_NEG_INF;
+  max_1 = max_m1 = HTM_INF;
+  for (i = 0, neg = 0, pos = 0; i < nv + 2; ++i)
+    {
+      double a = ab[2 * i];
+      double b = ab[2 * i + 1];
+      if (a == 0.0)
+        {
+          if (b < 0.0)
+            {
+              min_1 = HTM_INF;
+              max_1 = HTM_NEG_INF;
+            }
+          else if (b > 0.0)
+            {
+              min_m1 = HTM_INF;
+              max_m1 = HTM_NEG_INF;
+            }
+        }
+      else if (a < 0.0)
+        {
+          ++neg;
+          double d = -b / a;
+          if (d < max_1)
+            {
+              max_1 = d;
+            }
+          if (-d < max_m1)
+            {
+              max_m1 = -d;
+            }
+        }
+      else
+        {
+          ++pos;
+          double d = -b / a;
+          if (d > min_1)
+            {
+              min_1 = d;
+            }
+          if (-d > min_m1)
+            {
+              min_m1 = -d;
+            }
+        }
+    }
+  if (min_1 <= max_1 || min_m1 <= max_m1)
+    {
+      return 1;
+    }
+  return (neg == 0 || pos == 0);
 }
-

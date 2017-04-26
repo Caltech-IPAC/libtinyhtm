@@ -11,8 +11,7 @@ struct child_info
   int8_t idx;
   bool operator<(const child_info &c) const
   {
-    return depth < c.depth ||
-      (depth==c.depth && size < c.size);
+    return depth < c.depth || (depth == c.depth && size < c.size);
   }
 };
 

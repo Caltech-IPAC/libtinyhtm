@@ -3,6 +3,6 @@
 
 /*  Returns the number of seconds that have elapsed since the epoch.
  */
-double now();
+double now ();
 
 #endif

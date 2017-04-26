@@ -6,8 +6,7 @@
 
 #include "../mrg_seg.hxx"
 
-template<class T>
-void heap_down(mrg_seg<T> *segs, const size_t n)
+template <class T> void heap_down (mrg_seg<T> *segs, const size_t n)
 {
   mrg_seg<T> tmp;
   size_t i;
@@ -17,8 +16,8 @@ void heap_down(mrg_seg<T> *segs, const size_t n)
       i = 0;
       while (1)
         {
-          size_t left = 2*i + 1;
-          size_t right = 2*i + 2;
+          size_t left = 2 * i + 1;
+          size_t right = 2 * i + 2;
           size_t least = i;
           if (left < n && *(segs[left].cur) < *(segs[i].cur))
             {

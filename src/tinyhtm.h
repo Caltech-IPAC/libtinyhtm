@@ -1,5 +1,5 @@
 /** \file
-    \brief      Convenience header that includes all tinyhtm library headers. 
+    \brief      Convenience header that includes all tinyhtm library headers.
 
     \authors    Serge Monkewitz
     \copyright  IPAC/Caltech
@@ -24,7 +24,7 @@
     <tr><td> tinyhtm/geometry.h </td>
         <td> contains types and functions related to spherical geometry,
              including \link htm_v3 vectors \endlink,
-             \link htm_sc spherical coordinates \endlink, 
+             \link htm_sc spherical coordinates \endlink,
              \link htm_s2ellipse ellipses \endlink and
              \link htm_s2cpoly convex polygons \endlink. Spherical circles
              are easily represented as a position and a radius.
@@ -64,4 +64,3 @@
 #include "tinyhtm/tree.h"
 
 #endif /* HTM_TINYHTM_H */
-

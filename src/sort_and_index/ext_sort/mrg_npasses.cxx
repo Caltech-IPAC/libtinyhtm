@@ -4,12 +4,14 @@
 
 #include <cstddef>
 
-int mrg_npasses(size_t n, size_t k) {
+int mrg_npasses (size_t n, size_t k)
+{
   int m = 1;
   size_t b = k;
-  while (b < n) {
-    b *= k;
-    ++m;
-  }
+  while (b < n)
+    {
+      b *= k;
+      ++m;
+    }
   return m;
 }

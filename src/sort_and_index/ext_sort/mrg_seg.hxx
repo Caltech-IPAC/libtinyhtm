@@ -7,71 +7,72 @@
 
 /*  A contiguous sequence of sorted items, dubbed a multi-way merge segment.
  */
-template<class T>
-struct mrg_seg
+template <class T> struct mrg_seg
 {
   T *cur;
   T *end;
   T *blk;
 
-  void init(T* Cur, T* End, const size_t blksz)
+  void init (T *Cur, T *End, const size_t blksz)
   {
     size_t n;
-    const size_t pagesz = (size_t) sysconf(_SC_PAGESIZE);
-    size_t nbytes = (End - Cur)*sizeof(T);
+    const size_t pagesz = (size_t)sysconf (_SC_PAGESIZE);
+    size_t nbytes = (End - Cur) * sizeof(T);
     if (End <= Cur || blksz % pagesz != 0)
       {
-        throw std::runtime_error("Invalid merge segment");
+        throw std::runtime_error ("Invalid merge segment");
       }
     cur = Cur;
     end = End;
     n = reinterpret_cast<size_t>(Cur) % pagesz;
     if (n != 0)
       {
-        Cur=reinterpret_cast<T*>(reinterpret_cast<char *>(Cur) - n);
+        Cur = reinterpret_cast<T *>(reinterpret_cast<char *>(Cur) - n);
         nbytes += n;
       }
-    n = (nbytes > 2*blksz ? 2*blksz : nbytes);
+    n = (nbytes > 2 * blksz ? 2 * blksz : nbytes);
     if (n % pagesz != 0)
       {
         n += pagesz - n % pagesz;
       }
-    blk=reinterpret_cast<T*>(reinterpret_cast<char *>(Cur) + blksz);
-    if (madvise((void *) Cur, n, MADV_WILLNEED) != 0)
+    blk = reinterpret_cast<T *>(reinterpret_cast<char *>(Cur) + blksz);
+    if (madvise ((void *)Cur, n, MADV_WILLNEED) != 0)
       {
-        throw std::runtime_error("madvise() failed");
+        throw std::runtime_error ("madvise() failed");
       }
   }
 
-  int advance(const size_t blksz, T* Cur)
+  int advance (const size_t blksz, T *Cur)
   {
-    const size_t pagesz = (size_t) sysconf(_SC_PAGESIZE);
+    const size_t pagesz = (size_t)sysconf (_SC_PAGESIZE);
 
     if (Cur == end)
       {
-        void *start=reinterpret_cast<char *>(blk) - blksz;
-        size_t n=reinterpret_cast<char *>(end) - reinterpret_cast<char *>(start);
+        void *start = reinterpret_cast<char *>(blk) - blksz;
+        size_t n = reinterpret_cast<char *>(end)
+                   - reinterpret_cast<char *>(start);
         if (n % pagesz != 0)
           {
             n += pagesz - n % pagesz;
           }
-        if (madvise(start, n, MADV_DONTNEED) != 0)
+        if (madvise (start, n, MADV_DONTNEED) != 0)
           {
-            throw std::runtime_error("madvise() failed");
+            throw std::runtime_error ("madvise() failed");
           }
         return 0;
       }
-    assert(Cur >= blk && Cur < end);
-    if (madvise(reinterpret_cast<char *>(blk) - blksz, blksz,
-                MADV_DONTNEED) != 0)
+    assert (Cur >= blk && Cur < end);
+    if (madvise (reinterpret_cast<char *>(blk) - blksz, blksz, MADV_DONTNEED)
+        != 0)
       {
-        throw std::runtime_error("madvise() failed");
+        throw std::runtime_error ("madvise() failed");
       }
     cur = Cur;
-    blk = reinterpret_cast<T*>(reinterpret_cast<char *>(blk) + blksz);
+    blk = reinterpret_cast<T *>(reinterpret_cast<char *>(blk) + blksz);
     if (blk < end)
       {
-        size_t n=reinterpret_cast<char *>(end) - reinterpret_cast<char *>(blk);
+        size_t n = reinterpret_cast<char *>(end)
+                   - reinterpret_cast<char *>(blk);
         if (n >= blksz)
           {
             n = blksz;
@@ -80,25 +81,24 @@ struct mrg_seg
           {
             n += pagesz - n % pagesz;
           }
-        if (madvise((void *) blk, n, MADV_WILLNEED) != 0)
+        if (madvise ((void *)blk, n, MADV_WILLNEED) != 0)
           {
-            throw std::runtime_error("madvise() failed");
+            throw std::runtime_error ("madvise() failed");
           }
       }
     return 1;
   }
 
-  int consume(const size_t blksz, const size_t itemsz)
+  int consume (const size_t blksz, const size_t itemsz)
   {
-    T *Cur(reinterpret_cast<T*>
-                 (reinterpret_cast<char *>(cur) + itemsz));
-    if (Cur < end && Cur < blk) {
-      cur = Cur;
-      return 1;
-    }
-    return advance(blksz, Cur);
+    T *Cur (reinterpret_cast<T *>(reinterpret_cast<char *>(cur) + itemsz));
+    if (Cur < end && Cur < blk)
+      {
+        cur = Cur;
+        return 1;
+      }
+    return advance (blksz, Cur);
   }
-
 };
 
 // void mrg_seg_init(struct mrg_seg * const s,

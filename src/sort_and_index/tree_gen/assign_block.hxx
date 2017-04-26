@@ -12,9 +12,7 @@
 #include "../tree_gen_context.hxx"
 #include "../node.hxx"
 
-void assign_block(tree_gen_context &ctx,
-                  mem_node * const n,
-                  const uint64_t blockid,
-                  const int lod);
+void assign_block (tree_gen_context &ctx, mem_node *const n,
+                   const uint64_t blockid, const int lod);
 
 #endif

@@ -15,42 +15,45 @@ struct arena
   size_t itemsz;
   size_t nseg;
 
-  arena()=delete;
-  arena(const size_t Itemsz)
-  : tail(new arena_seg(nullptr,Itemsz)), head(static_cast<mem_node *>(tail->mem)),
-    itemsz(Itemsz), nseg(1) {}
+  arena () = delete;
+  arena (const size_t Itemsz)
+      : tail (new arena_seg (nullptr, Itemsz)),
+        head (static_cast<mem_node *>(tail->mem)), itemsz (Itemsz), nseg (1)
+  {
+  }
 
-  void * alloc()
+  void *alloc ()
   {
     void *item;
-    if (head == nullptr) {
-      tail = new arena_seg(tail, itemsz);
-      head = static_cast<mem_node *>(tail->mem);
-      ++nseg;
-    }
+    if (head == nullptr)
+      {
+        tail = new arena_seg (tail, itemsz);
+        head = static_cast<mem_node *>(tail->mem);
+        ++nseg;
+      }
     item = head;
-    head = static_cast<mem_node *>(*((void **) item));
+    head = static_cast<mem_node *>(*((void **)item));
     return item;
   }
 
-  void free(void * const n)
+  void free (void *const n)
   {
-    *((void **) n) = head;
+    *((void **)n) = head;
     head = static_cast<mem_node *>(n);
   }
-  ~arena()
+  ~arena ()
   {
     arena_seg *seg = tail;
     while (seg != nullptr)
       {
         arena_seg *prev = seg->prev;
-        delete(seg);
+        delete (seg);
         seg = prev;
       }
   }
 };
 
-struct arena_seg * arena_seg_init(struct arena_seg * const prev,
+struct arena_seg *arena_seg_init (struct arena_seg *const prev,
                                   const size_t itemsz);
 
 #endif

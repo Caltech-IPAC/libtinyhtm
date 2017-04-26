@@ -15,14 +15,15 @@
     \section usage Usage
 
     <pre><tt>
-    htm_tree_gen [options] &lt;tree file&gt; &lt;input file 1&gt; [&lt;input file 2&gt; ...]
+    htm_tree_gen [options] &lt;tree file&gt; &lt;input file 1&gt; [&lt;input
+   file 2&gt; ...]
     </tt></pre>
 
     \section opts Command Line Options
 
     Running <tt>htm_tree_index --help</tt> provides a list of the supported
     command line options and their descriptions.
-    
+
     \section over Overview
 
     HTM tree indexes can be used to quickly count or estimate how many points
@@ -101,7 +102,7 @@
     The result is a string of block IDs for each node - a unique node ID.
     Note that block IDs are handed out sequentially for a given block size.
     Since tree nodes are visited in post-order, the block ID of a parent
-    must be greater than or equal to the block ID of a child. Once block IDs 
+    must be greater than or equal to the block ID of a child. Once block IDs
     for a node have been computed at every block size, the node can be written
     to disk. If the largest block size is B, the in-memory node size is M,
     and the on disk node size is N, then 8BM/N bytes of RAM are required
@@ -210,134 +211,134 @@
 #include "../sort_and_index/node.hxx"
 #include "../sort_and_index.hxx"
 
-size_t blk_sort_ascii(const std::vector<std::string> &infiles,
-                      const std::string &outfile,
-                      const char delim,
-                      const struct mem_params * const mem);
+size_t blk_sort_ascii (const std::vector<std::string> &infiles,
+                       const std::string &outfile, const char delim,
+                       const struct mem_params *const mem);
 
-void usage(const char *prog);
+void usage (const char *prog);
 
-int main(int argc, char **argv)
+int main (int argc, char **argv)
 {
-    std::vector<std::string> infiles;
-    std::string treefile, datafile, scratch;
-    size_t npoints;
-    size_t memsz = 512*1024*1024;
-    size_t ioblksz = 1024*1024;
-    size_t minpoints = 1024;
-    uint64_t leafthresh = 64;
-    char delim = '|';
+  std::vector<std::string> infiles;
+  std::string treefile, datafile, scratch;
+  size_t npoints;
+  size_t memsz = 512 * 1024 * 1024;
+  size_t ioblksz = 1024 * 1024;
+  size_t minpoints = 1024;
+  uint64_t leafthresh = 64;
+  char delim = '|';
 
-    while (1) {
-        static struct option long_options[] = {
-              { "help",        no_argument,       0, 'h' },
-              { "blk-size",    required_argument, 0, 'b' },
-              { "delim",       required_argument, 0, 'd' },
-              { "max-mem",     required_argument, 0, 'm' },
-              { "tree-min",    required_argument, 0, 't' },
+  while (1)
+    {
+      static struct option long_options[]
+          = { { "help", no_argument, 0, 'h' },
+              { "blk-size", required_argument, 0, 'b' },
+              { "delim", required_argument, 0, 'd' },
+              { "max-mem", required_argument, 0, 'm' },
+              { "tree-min", required_argument, 0, 't' },
               { "leaf-thresh", required_argument, 0, 'l' },
-              { 0, 0, 0, 0 }
-        };
-        unsigned long long v;
-        char *endptr;
-        int option_index = 0;
-        int c = getopt_long(argc, argv, "hb:d:l:m:t:",
-                            long_options, &option_index);
-        if (c == -1) {
-            break; /* no more options */
+              { 0, 0, 0, 0 } };
+      unsigned long long v;
+      char *endptr;
+      int option_index = 0;
+      int c = getopt_long (argc, argv, "hb:d:l:m:t:", long_options,
+                           &option_index);
+      if (c == -1)
+        {
+          break; /* no more options */
         }
-        switch (c) {
-            case 'h':
-                usage(argv[0]);
-                return EXIT_SUCCESS;
-            case 'b':
-                v = strtoull(optarg, &endptr, 0);
-                if (endptr == optarg || errno != 0 || v < 1 || v > 1024*1024)
-                  {
-                    throw std::runtime_error("--blk-size invalid. Please specify an integer between "
-                                             "1 and 1,048,576 (KiB).");
-                  }
-                ioblksz = (size_t) v*1024;
-                break;
-            case 'd':
-                if (strlen(optarg) != 1)
-                  {
-                    throw std::runtime_error("--delim|-d argument must be a single character");
-                  }
-                delim = optarg[0];
-                if (delim == '\0' ||
-                    strchr("\n.+-eE0123456789aAfFiInN", delim) != NULL)
-                  {
-                    std::stringstream ss;
-                    ss << "--delim invalid: '"
-                       << delim
-                       << "'";
-                    throw std::runtime_error(ss.str());
-                  }
-                break;
-            case 'l':
-                v = strtoull(optarg, &endptr, 0);
-                if (endptr == optarg || errno != 0 || v < 1 || v > 1024*1024)
-                  {
-                    throw std::runtime_error("--leaf-max invalid. Please specify an integer between "
-                                             "1 and 1,048,576.");
-                  }
-                leafthresh = (uint64_t) v;
-                break;
-            case 'm':
-                v = strtoull(optarg, &endptr, 0);
-                if (endptr == optarg || errno != 0 ||
-                    v < 1 || v > SIZE_MAX/2097152)
-                  {
-                    std::stringstream ss;
-                    ss << "--max-mem invalid. Please specify an integer between 1 and "
-                       << SIZE_MAX/2097152
-                       << " (MiB).";
-                    throw std::runtime_error(ss.str());
-                  }
-                memsz = (size_t) v*1024*1024;
-                break;
-            case 't':
-                v = strtoull(optarg, &endptr, 0);
-                if (endptr == optarg || errno != 0 || v > SIZE_MAX)
-                  {
-                    std::stringstream ss;
-                    ss << "--tree-min invalid. Please specify a non-negative "
-                      "integer less than or equal to "
-                       << SIZE_MAX;
-                    throw std::runtime_error(ss.str());
-                }
-                minpoints = (size_t) v;
-                break;
-            case '?':
-                return EXIT_FAILURE;
-            default:
-                abort();
+      switch (c)
+        {
+        case 'h':
+          usage (argv[0]);
+          return EXIT_SUCCESS;
+        case 'b':
+          v = strtoull (optarg, &endptr, 0);
+          if (endptr == optarg || errno != 0 || v < 1 || v > 1024 * 1024)
+            {
+              throw std::runtime_error (
+                  "--blk-size invalid. Please specify an integer between "
+                  "1 and 1,048,576 (KiB).");
+            }
+          ioblksz = (size_t)v * 1024;
+          break;
+        case 'd':
+          if (strlen (optarg) != 1)
+            {
+              throw std::runtime_error (
+                  "--delim|-d argument must be a single character");
+            }
+          delim = optarg[0];
+          if (delim == '\0'
+              || strchr ("\n.+-eE0123456789aAfFiInN", delim) != NULL)
+            {
+              std::stringstream ss;
+              ss << "--delim invalid: '" << delim << "'";
+              throw std::runtime_error (ss.str ());
+            }
+          break;
+        case 'l':
+          v = strtoull (optarg, &endptr, 0);
+          if (endptr == optarg || errno != 0 || v < 1 || v > 1024 * 1024)
+            {
+              throw std::runtime_error (
+                  "--leaf-max invalid. Please specify an integer between "
+                  "1 and 1,048,576.");
+            }
+          leafthresh = (uint64_t)v;
+          break;
+        case 'm':
+          v = strtoull (optarg, &endptr, 0);
+          if (endptr == optarg || errno != 0 || v < 1
+              || v > SIZE_MAX / 2097152)
+            {
+              std::stringstream ss;
+              ss << "--max-mem invalid. Please specify an integer between 1 "
+                    "and " << SIZE_MAX / 2097152 << " (MiB).";
+              throw std::runtime_error (ss.str ());
+            }
+          memsz = (size_t)v * 1024 * 1024;
+          break;
+        case 't':
+          v = strtoull (optarg, &endptr, 0);
+          if (endptr == optarg || errno != 0 || v > SIZE_MAX)
+            {
+              std::stringstream ss;
+              ss << "--tree-min invalid. Please specify a non-negative "
+                    "integer less than or equal to " << SIZE_MAX;
+              throw std::runtime_error (ss.str ());
+            }
+          minpoints = (size_t)v;
+          break;
+        case '?':
+          return EXIT_FAILURE;
+        default:
+          abort ();
         }
     }
-    if (argc - optind < 2)
-      {
-        throw std::runtime_error("Output file and at least one input file must be specified");
-      }
+  if (argc - optind < 2)
+    {
+      throw std::runtime_error (
+          "Output file and at least one input file must be specified");
+    }
 
-    treefile=argv[optind] + std::string(".htm");
-    datafile=argv[optind] + std::string(".h5");
-    scratch=argv[optind] + std::string(".scr");
+  treefile = argv[optind] + std::string (".htm");
+  datafile = argv[optind] + std::string (".h5");
+  scratch = argv[optind] + std::string (".scr");
 
-    ++optind;
-    for(; optind<argc; ++optind)
-      {
-        infiles.push_back(argv[optind]);
-      }
-    mem_params mem(memsz, ioblksz);
+  ++optind;
+  for (; optind < argc; ++optind)
+    {
+      infiles.push_back (argv[optind]);
+    }
+  mem_params mem (memsz, ioblksz);
 
-    printf("\n");
+  printf ("\n");
 
-    /* Phase 1: produce sorted point file from ASCII inputs */
-    npoints = blk_sort_ascii(infiles, datafile, delim, &mem);
+  /* Phase 1: produce sorted point file from ASCII inputs */
+  npoints = blk_sort_ascii (infiles, datafile, delim, &mem);
 
-    sort_and_index<tree_entry>(datafile,scratch,treefile,mem,
-                               npoints,minpoints,leafthresh);
-    return EXIT_SUCCESS;
+  sort_and_index<tree_entry>(datafile, scratch, treefile, mem, npoints,
+                             minpoints, leafthresh);
+  return EXIT_SUCCESS;
 }
-
