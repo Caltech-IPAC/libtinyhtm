@@ -69,9 +69,11 @@ def configure(ctx):
 
     # Massage CFLAGS depending on whether or not
     # code coverage / debugging is requestd
+
+    ctx.env.append_value('CFLAGS', '-g')
+    ctx.env.append_value('CXXFLAGS', '-g')
+
     if ctx.options.enable_gcov:
-        ctx.env.append_value('CFLAGS', '-g')
-        ctx.env.append_value('CXXFLAGS', '-g')
         ctx.find_program('gcov', var='GCOV', mandatory=False)
         if ctx.env['GCOV']:
             ctx.env.append_value('CFLAGS', '-fprofile-arcs')
@@ -79,20 +81,16 @@ def configure(ctx):
             ctx.env.append_value('CXXFLAGS', '-fprofile-arcs')
             ctx.env.append_value('CXXFLAGS', '-ftest-coverage')
             ctx.env.append_value('LINKFLAGS', '-fprofile-arcs')
-    else:
-        if ctx.options.debug:
-            ctx.env.append_value('CFLAGS', '-g')
-            ctx.env.append_value('CXXFLAGS', '-g')
-        else:
-            ctx.env.append_value('CFLAGS', '-Ofast')
-            ctx.env.append_value('CFLAGS', '-mtune=native')
-            ctx.env.append_value('CFLAGS', '-march=native')
-            ctx.env.append_value('CFLAGS', '-DNDEBUG')
-            ctx.env.append_value('CXXFLAGS', '-Ofast')
-            ctx.env.append_value('CXXFLAGS', '-fopenmp')
-            ctx.env.append_value('CXXFLAGS', '-mtune=native')
-            ctx.env.append_value('CXXFLAGS', '-march=native')
-            ctx.env.append_value('CXXFLAGS', '-DNDEBUG')
+    elif not ctx.options.debug:
+        ctx.env.append_value('CFLAGS', '-Ofast')
+        ctx.env.append_value('CFLAGS', '-mtune=native')
+        ctx.env.append_value('CFLAGS', '-march=native')
+        ctx.env.append_value('CFLAGS', '-DNDEBUG')
+        ctx.env.append_value('CXXFLAGS', '-Ofast')
+        ctx.env.append_value('CXXFLAGS', '-fopenmp')
+        ctx.env.append_value('CXXFLAGS', '-mtune=native')
+        ctx.env.append_value('CXXFLAGS', '-march=native')
+        ctx.env.append_value('CXXFLAGS', '-DNDEBUG')
 
     # Automatic parallelization of some STL libraries.  Does not seem
     # to help.
