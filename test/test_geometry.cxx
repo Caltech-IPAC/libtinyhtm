@@ -75,12 +75,14 @@ static const size_t lengths[NLENGTHS] = {
 static void test_utils()
 {
     double angle;
-
     /* htm_angred */
     HTM_ASSERT(htm_angred(45.0) == 45.0, "htm_angred() failed");
     HTM_ASSERT(htm_angred(-180.0) == 180.0, "htm_angred() failed");
     HTM_ASSERT(htm_angred(540.0) == 180.0, "htm_angred() failed");
+    HTM_ASSERT(htm_angred(HTM_DEG_IN_CIRCLE) == 0.0, "htm_angred() failed");
     HTM_ASSERT(htm_angred(-DBL_EPSILON) == 0.0, "htm_angred() failed");
+    HTM_ASSERT(htm_angred(HTM_DEG_IN_CIRCLE - DBL_EPSILON) == 0.0, "htm_angred() failed");
+    HTM_ASSERT(htm_angred(DBL_EPSILON) == DBL_EPSILON, "htm_angred() failed");
 
     /* htm_clamp */
     angle = -91.0;
@@ -479,7 +481,7 @@ static void test_s2cpoly()
     HTM_ASSERT(almost_equal(htm_s2cpoly_area(poly), M_PI / 6.0, 8.0 * DBL_EPSILON),
                "htm_s2cpoly_area() failed");
     free(poly);
-    poly = htm_s2cpoly_ngon(&z, 90.0 - 0.1/3600.0, 65536, &err);
+    poly = htm_s2cpoly_ngon(&z, 90.0 - 0.1/HTM_ARCSEC_PER_DEG, 65536, &err);
     HTM_ASSERT(poly != NULL && err == HTM_OK, "htm_s2cpoly_ngon() failed");
     HTM_ASSERT(almost_equal(htm_s2cpoly_area(poly), 2.0 * M_PI, 1.0e-3),
                "htm_s2cpoly_area() failed");
@@ -598,7 +600,7 @@ static void test_pad()
     /* check that circles of radius almost 1 around each original vertex
        are inside the padded polygon */
     for (i = 0; i < clone->n; ++i) {
-        points = gen_circles(&clone->ve[i], 1.0 - 1.0/3600.0, 1000);
+        points = gen_circles(&clone->ve[i], 1.0 - 1.0/HTM_ARCSEC_PER_DEG, 1000);
         for (j = 0; j < 1000; ++j) {
             HTM_ASSERT(htm_s2cpoly_cv3(poly, &points[j]) == 1,
                        "htm_s2cpoly_pad() or htm_s2cpoly_cv3() failed");
@@ -785,7 +787,7 @@ static void test_hemis_rand()
         htm_v3_normalize(&v, &centers[i]);
         for (j = 0; j < NLENGTHS; ++j) {
             size_t n = lengths[j];
-            struct htm_v3 *points = gen_circles(&v, 90.0 - 0.002/3600.0, n);
+            struct htm_v3 *points = gen_circles(&v, 90.0 - 0.002/HTM_ARCSEC_PER_DEG, n);
             int hemis;
             enum htm_errcode err;
             hemis = htm_v3_hemispherical(points, n, &err);

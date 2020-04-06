@@ -82,11 +82,11 @@ def configure(ctx):
             ctx.env.append_value('CXXFLAGS', '-ftest-coverage')
             ctx.env.append_value('LINKFLAGS', '-fprofile-arcs')
     elif not ctx.options.debug:
-        ctx.env.append_value('CFLAGS', '-Ofast')
+        ctx.env.append_value('CFLAGS', '-O3')
         ctx.env.append_value('CFLAGS', '-mtune=native')
         ctx.env.append_value('CFLAGS', '-march=native')
         ctx.env.append_value('CFLAGS', '-DNDEBUG')
-        ctx.env.append_value('CXXFLAGS', '-Ofast')
+        ctx.env.append_value('CXXFLAGS', '-O3')
         ctx.env.append_value('CXXFLAGS', '-fopenmp')
         ctx.env.append_value('CXXFLAGS', '-mtune=native')
         ctx.env.append_value('CXXFLAGS', '-march=native')

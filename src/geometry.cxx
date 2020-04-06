@@ -61,7 +61,8 @@ enum htm_errcode htm_v3_ne (struct htm_v3 *north, struct htm_v3 *east,
   return HTM_OK;
 }
 
-static const double HTM_RMAX = 90.0 - 0.001 / 3600.0;
+static const double HTM_RMAX
+    = HTM_DEG_IN_CIRCLE / 4 - 0.001 / HTM_ARCSEC_PER_DEG;
 
 enum htm_errcode htm_v3_tanrot (double *angle, const struct htm_v3 *v1,
                                 const struct htm_v3 *v2, double r)
@@ -184,8 +185,8 @@ enum htm_errcode htm_v3_tosc (struct htm_sc *out, const struct htm_v3 *v)
       double lon = atan2 (v->y, v->x) * HTM_DEG_PER_RAD;
       if (lon < 0.0)
         {
-          lon += 360.0;
-          if (lon == 360.0)
+          lon += HTM_DEG_IN_CIRCLE;
+          if (lon == HTM_DEG_IN_CIRCLE)
             {
               lon = 0.0;
             }
@@ -583,7 +584,7 @@ struct htm_s2cpoly *htm_s2cpoly_ngon (const struct htm_v3 *cen, double r,
   for (i = 0; i < n; ++i)
     {
       double ang, sa, ca;
-      ang = (HTM_RAD_PER_DEG * 360.0 * i) / n;
+      ang = (HTM_RAD_PER_DEG * HTM_DEG_IN_CIRCLE * i) / n;
       sa = sin (ang);
       ca = cos (ang);
       v.x = ca * north.x + sa * east.x;
@@ -1487,7 +1488,7 @@ int htm_v3_convex (const struct htm_v3 *points, size_t n,
       *err = HTM_OK;
     }
   /* for convex polygons, the closest multiple of 360 to the
-     total winding angle is 1 */
+     total winding angle is 360 itself */
   if (wind > 180.0 && wind < 540.0)
     {
       return ccw ? 1 : -1;

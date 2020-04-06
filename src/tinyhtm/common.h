@@ -6,7 +6,6 @@
   */
 #ifndef HTM_COMMON_H
 #define HTM_COMMON_H
-
 #include <stddef.h>
 #include <stdint.h>
 #include <math.h>
@@ -126,15 +125,19 @@ const char *htm_errmsg (enum htm_errcode err);
 /** Arcseconds per degree. */
 #define HTM_ARCSEC_PER_DEG 3600.0
 
+/** Degrees in circle. */
+#define HTM_DEG_IN_CIRCLE 360.0
+
+
 /** Returns the given angle, range-reduced to lie in <tt>[0, 360)</tt> degrees.
   */
 HTM_INLINE double htm_angred (double angle_deg)
 {
-  double angle = fmod (angle_deg, 360.0);
+  double angle = fmod (angle_deg, HTM_DEG_IN_CIRCLE);
   if (angle < 0.0)
     {
-      angle += 360.0;
-      if (angle == 360.0)
+      angle += HTM_DEG_IN_CIRCLE;
+      if (angle == HTM_DEG_IN_CIRCLE)
         {
           angle = 0.0;
         }
