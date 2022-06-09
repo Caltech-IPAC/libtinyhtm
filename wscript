@@ -258,7 +258,10 @@ def build(ctx):
         )
 
     # install headers
+    # one file to the top INCLUDEDIR...
     ctx.install_files(ctx.env.INCLUDEDIR, ['src/tinyhtm.h'])
+
+    #...and the rest a level below.
     ctx.install_files(ctx.env.INCLUDEDIR + '/tinyhtm',
                       ctx.path.ant_glob('src/tinyhtm/*')
                       + ctx.path.ant_glob('**/config.h'))
