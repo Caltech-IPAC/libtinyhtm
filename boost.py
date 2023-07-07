@@ -7,6 +7,7 @@
 # modified by Luca Fossati, 2008
 # rewritten for waf 1.5.1, Thomas Nagy, 2008
 # rewritten for waf 1.6.2, Sylvain Rouquette, 2011
+import platform
 
 '''
 
@@ -54,7 +55,7 @@ from waflib import Utils, Logs, Errors
 from waflib.Configure import conf
 from waflib.TaskGen import feature, after_method
 
-BOOST_LIBS = ['/usr/lib/x86_64-linux-gnu', '/usr/lib/i386-linux-gnu',
+BOOST_LIBS = ['/usr/lib/'+platform.machine()+'-linux-gnu',
 			  '/usr/lib', '/usr/local/lib', '/opt/local/lib', '/sw/lib', '/lib']
 BOOST_INCLUDES = ['/usr/include', '/usr/local/include', '/opt/local/include', '/sw/include']
 BOOST_VERSION_FILE = 'boost/version.hpp'

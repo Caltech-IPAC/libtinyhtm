@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 # encoding: utf-8
+import platform
 
 def options(opt):
     hdf5=opt.add_option_group('HDF5 C/C++ Options')
@@ -30,7 +31,7 @@ def configure(conf):
        and not conf.options.hdf5_c_libs and not conf.options.hdf5_cxx_libs:
         hdf5_config=[[[],[],['hdf5'],['hdf5_cpp']],
                      [['/usr/include/hdf5/serial'],
-                      ['/usr/lib/x86_64-linux-gnu/hdf5/serial'],
+                      ['/usr/lib/'+platform.machine()+'-linux-gnu/hdf5/serial'],
                       ['hdf5'],['hdf5_cpp']]]
     else:
         if conf.options.hdf5_incdir:
