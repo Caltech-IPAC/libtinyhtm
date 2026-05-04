@@ -65,7 +65,6 @@ def configure(ctx):
     # malloc() instead. Useful when checking memory safety, e.g. with
     # valgrind.
     ctx.define('FAST_ALLOC',1)
-    ctx.write_config_header('include/tinyhtm/config.h')
 
     # Massage CFLAGS depending on whether or not
     # code coverage / debugging is requestd
@@ -257,14 +256,20 @@ def build(ctx):
             use='cxx17 testobjs M tinyhtm_st tinyhtmcxx_st'
         )
 
+    # generate build-time config header
+    ctx.write_config_header('include/tinyhtm/config.h')
+
     # install headers
     # one file to the top INCLUDEDIR...
     ctx.install_files(ctx.env.INCLUDEDIR, ['src/tinyhtm.h'])
 
     #...and the rest a level below.
     ctx.install_files(ctx.env.INCLUDEDIR + '/tinyhtm',
-                      ctx.path.ant_glob('src/tinyhtm/*')
-                      + ctx.path.ant_glob('**/config.h'))
+                      # "src=True, bld=False" ensures that we pick up only
+                      # original source files.
+                      # Explicitly add the single generated file.
+                      ctx.path.ant_glob('src/tinyhtm/*', src=True, bld=False) +
+                      [ctx.path.find_or_declare('include/tinyhtm/config.h')])
     ctx.install_files(ctx.env.INCLUDEDIR + '/tinyhtm',
                       ctx.path.ant_glob('src/**/*.hxx'),
                       cwd=ctx.path.find_dir('src'), relative_trick=True)
