@@ -346,7 +346,8 @@ enum htm_errcode htm_s2ellipse_init2 (struct htm_s2ellipse *ellipse,
      x^2/tan(a)^2 + y^2/tan(b)^2 - z^2 = 0
 
      in the basis [n, e, cen], where n and e are the north/east vectors
-     at cen rotated clockwise by posang.
+     at cen rotated counterclockwise by posang (in the astronomical sense,
+	 i.e. rotating North toward East).
 
      Let M be the 3x3 orthogonal matrix with rows n, e and cen, and let M'
      be its tranpose. Then the matrix Q of the elliptical cone is:
@@ -359,6 +360,7 @@ enum htm_errcode htm_s2ellipse_init2 (struct htm_s2ellipse *ellipse,
            0           1/tan(b)^2   0
            0           0           -1 ]
    */
+
   ellipse->cen = *cen;
   ellipse->a = a;
   a = tan (HTM_RAD_PER_DEG * a);
@@ -366,15 +368,17 @@ enum htm_errcode htm_s2ellipse_init2 (struct htm_s2ellipse *ellipse,
   a = 1.0 / (a * a);
   b = 1.0 / (b * b);
   htm_v3_ne (&N, &E, cen);
+
   /* N, E is the north, east basis at cen */
   s = sin (HTM_RAD_PER_DEG * angle);
   c = cos (HTM_RAD_PER_DEG * angle);
   htm_v3_mul (&n, &N, c);
   htm_v3_mul (&e, &E, s);
-  htm_v3_sub (&n, &n, &e); /* n = cos(angle)*N - sin(angle)*E */
+  htm_v3_add (&n, &n, &e); /* n = cos(angle)*N + sin(angle)*E */
   htm_v3_mul (&N, &N, s);
   htm_v3_mul (&E, &E, c);
-  htm_v3_add (&e, &N, &E); /* e = sin(angle)*N + cos(angle)*E */
+  htm_v3_sub (&e, &E, &N); /* e = cos(angle)*E - sin(angle)*N */
+
   /* have the elements of M and D, compute and store Q */
   ellipse->xx = a * n.x * n.x + b * e.x * e.x - cen->x * cen->x;
   ellipse->yy = a * n.y * n.y + b * e.y * e.y - cen->y * cen->y;

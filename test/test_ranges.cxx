@@ -39,7 +39,7 @@ int main()
           17349788827647,17350862569471}};
   bool circle_result=check_ranges(ranges,circle_min_range,circle_max_range,"Circle");
   
-  tinyhtm::Ellipse ellipse(tinyhtm::Spherical(27.1828,31.415),14.14,1.618,42);
+  tinyhtm::Ellipse ellipse(tinyhtm::Spherical(27.1828,31.415),14.14,1.618,-42);
   ranges=ellipse.covering_ranges(htm_level,max_ranges);
   std::array<int64_t,4> ellipse_min_range{{17317308137472,17368847745024,
       17420387352576,17557826306048}},
